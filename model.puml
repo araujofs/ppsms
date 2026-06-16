@@ -1,19 +1,97 @@
 @startuml modelo
 
+  enum Category {
+    - title: String
+  }
+  note top: Full Paper,\nShort Paper,\nDemo
+
   class Area {
     - title: String
     - event: Event
   }
 
-  class Event {
-    - name: String
-    - city: String
-    - start: Date
-    - end: Date
-    - areas: List<Area>
+  skinparam packageStyle rectangle
+  package Client {}
+
+  package Builder {
+    class Event {
+      - name: String
+      - city: String
+      - start: Date
+      - end: Date
+      - areas: List<Area>
+    }
+
+    Event "1, 1" *-- "1, n" Area 
+    Event "0, n" *.. "1, 1" Category
+
+    interface EventBuilderInterface {
+      + reset()
+      + setName(name: String)
+      + setCity(city: String)
+      + setStart(start: Date)
+      + setEnd(end: String)
+      + setAreas(areas: List<Area>)
+    }
+
+
+    class EventBuilder implements EventBuilderInterface {
+      - result: Event
+      + reset()
+      + setName(name: String)
+      + setCity(city: String)
+      + setStart(start: Date)
+      + setEnd(end: String)
+      + setAreas(areas: List<Area>)
+      + getResult(): Event
+    }
+
+
+    class EventBuildingDirector {
+      - builder: Builder
+      - {static} instance: EventBuildingDirector
+      - Director(builder: Builder)
+      + {static} getInstance(): EventBuildingDirector
+      + changeBuilder(builder: Builder)
+      + makeEvent(builder: Builder)
+    }
+
+
+    EventBuilderInterface ..> Area
+
+    EventBuilder --> Event 
+
+    EventBuildingDirector --> EventBuilderInterface
+    
+
+    Client --> EventBuildingDirector
+    Client ..> EventBuilder
   }
 
-  Event "1, 1" *-- "1, n" Area 
+  class EventRepo {
+    - {static} instance: EventRepo
+    - EventRepo(): EventRepo
+    + {static} getInstance(): EventRepo
+    + saveEvent(event: Event)
+  }
+
+  class EventService {
+    - {static} instance: EventService
+    - EventService(): EventService
+    + {static} getInstance(): EventService
+    + startEvent(event: Event)
+  }
+
+  EventService ..> Event
+  EventRepo ..> Event
+
+  note "Singleton" as N1
+
+  N1 .. EventService
+  N1 .. EventRepo
+  N1 .. UserService
+  N1 .. UserRepo
+  N1 .. EventBuildingDirector
 
   class User { 
     - name: String 
@@ -26,9 +104,28 @@
 
   User "0, n" --> "0, n" Area
 
-  class Role {
+  class UserRepo {
+    - {static} instance: UserRepo
+    - UserRepo(): UserRepo
+    + {static} getInstance(): UserRepo
+    + saveUser(user: User)
+  }
+
+  class UserService {
+    - {static} instance: UserService
+    - UserService(): UserService
+    + {static} getInstance(): UserService
+    + createUser(user: User)
+  }
+
+  UserService ..> User
+  UserRepo ..> User
+
+
+  enum Role {
     - title: String
   }
+  note right: RES,\nREV,\nCRD
 
   User "0, n" *.. "1, n" Role
 

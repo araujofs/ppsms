@@ -6,35 +6,30 @@
   }
 
   class Event {
-    - nome: String
-    - cidade: String
-    - inicio: Date
-    - fim: Date
+    - name: String
+    - city: String
+    - start: Date
+    - end: Date
     - areas: List<Area>
-    - {static} instance: Event
-    - Event(): Event
-    + {static} getInstance(): Event
   }
-
-  note top of Event : Métodos e linhas sublinhados\nsão estáticos
 
   Event "1, 1" *-- "1, n" Area 
 
-  class Usuario { 
-    - nome: String 
+  class User { 
+    - name: String 
     - email: String
-    - senha: String
-    - instituição: String
+    - password: String
+    - institution: String
     - areas: List<Area>
     - roles: List<Role>
   }
 
-  Usuario "0, n" --> "0, n" Area
+  User "0, n" --> "0, n" Area
 
   class Role {
     - title: String
   }
 
-  Usuario "0, n" *.. "1, n" Role
+  User "0, n" *.. "1, n" Role
 
 @enduml

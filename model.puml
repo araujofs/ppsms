@@ -129,4 +129,82 @@
 
   User "0, n" *.. "1, n" Role
 
+  class Article {
+    - id: Integer
+    - title: String
+    - abstractText: String
+    - file: String
+    - authors: List<User>
+    - areas: List<Area>
+    - reviews: List<Review>
+    - status: ArticleState
+    + setStatus(status: ArticleState)
+    + distribute()
+    + addReview(review: Review)
+    + finalizeEvaluation()
+    + getReviewsForAuthor(): List<Review>
+  }
+
+  Article "0, n" --> "1, n" User : authors
+  Article "0, n" --> "1, n" Area : areas
+  Article "1" *-- "0, n" Review : reviews
+
+  enum Verdict {
+    REJECT
+    WEAK_REJECT
+    WEAK_ACCEPT
+    ACCEPT
+  }
+
+  class Review {
+    - id: Integer
+    - contributions: String
+    - critiques: String
+    - verdict: Verdict
+    + Review(contributions: String, critiques: String, verdict: Verdict)
+    + getVerdict(): Verdict
+    + getContributions(): String
+    + getCritiques(): String
+  }
+
+  Review "0, n" --> "1" Verdict : verdict
+  Review "0, n" --> "1, 1" User : reviewer
+  Review "0, n" --> "1, 1" Article : article
+
+  interface ArticleState {
+    + distribute(article: Article)
+    + addReview(article: Article, review: Review)
+    + finalizeEvaluation(article: Article)
+    + getReviewsForAuthor(article: Article): List<Review>
+  }
+
+  class SubmittedState implements ArticleState {
+    + distribute(article: Article)
+    + addReview(article: Article, review: Review)
+    + finalizeEvaluation(article: Article)
+    + getReviewsForAuthor(article: Article): List<Review>
+  }
+
+  class UnderReviewState implements ArticleState {
+    + distribute(article: Article)
+    + addReview(article: Article, review: Review)
+    + finalizeEvaluation(article: Article)
+    + getReviewsForAuthor(article: Article): List<Review>
+  }
+
+  class AcceptedState implements ArticleState {
+    + distribute(article: Article)
+    + addReview(article: Article, review: Review)
+    + finalizeEvaluation(article: Article)
+    + getReviewsForAuthor(article: Article): List<Review>
+  }
+
+  class RejectedState implements ArticleState {
+    + distribute(article: Article)
+    + addReview(article: Article, review: Review)
+    + finalizeEvaluation(article: Article)
+    + getReviewsForAuthor(article: Article): List<Review>
+  }
+
+  Article "1" --> "1" ArticleState : status
 @enduml

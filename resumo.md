@@ -31,20 +31,29 @@
   - não mostrar ao revisor quem são os autores do artigo que vai avaliar
   - notificar revisor sobre cada artigo recebido para avaliação
   - o sistema deve priorizar revisores com maior compatibilidade com as áreas temáticas do artigo
-  - o autor deve aceitar o artigo
+    - um autor tem 3 áreas temáticas de compat. outro apenas duas, o com mais ganha o artigo
+  - o autor sempre aceita o artigo (não há opção)
+- Visualizar artigos para revisão (como autor)
 - Avaliar artigo escrevendo críticas (texto), contribuições (outro texto) e dando um veredito final dentre:
   - recusado
   - fracamente rejeitado
   - fracamente aceito
   - aceito
+- Visualizar dados do evento como coordenador:
+    - número de
+        - artigos submetidos
+        - revisores
+        - artigos avaliados
+        - artigos pendentes
+    - relação de artigos pendentes e avaliador responsável
+- Notificar autores no final do ciclo de revisões (acho que é ao revisar todos os artigos ou na data determinada)
+- Extra ???
 
 ## Padrões que provavelmente serão usados em algum lugar
 
-- Proxy
 - Chain (Autorização)
 - Proxy (talvez melhor para autorização do que Chain, considerando o escopo e facilidade de implementar)
 - Facade (Um service por exemplo)
-- State
 - Observer (envio de artigo p/ revisão)
 - Singleton (p/ repositories e services)
 - Strategy
@@ -54,4 +63,4 @@
 - Separar em camadas
     - Apresentação
     - Lógica (onde se enquadrariam os padrões, serviços, etc)
-    - Banco (Repositórios, dá pra usar uma interface genérica aqui que os repos devem implementar para evitar acoplamento onde der)
+    - Banco (Repositórios)

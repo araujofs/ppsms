@@ -1,96 +1,77 @@
 @startuml modelo
 
   enum Category {
-    - title: String
+    FULL
+    SHORT
+    DEMO
   }
-  note top: Full Paper,\nShort Paper,\nDemo
 
   class Area {
     - title: String
     - event: Event
+    - articles: List<Article>
   }
 
   skinparam packageStyle rectangle
   package Client {}
 
-  package Builder {
-    class Event {
-      - name: String
-      - city: String
-      - start: Date
-      - end: Date
-      - areas: List<Area>
-    }
-
-    Event "1, 1" *-- "1, n" Area 
-    Event "0, n" *.. "1, 1" Category
-
-    interface EventBuilderInterface {
-      + reset()
-      + setName(name: String)
-      + setCity(city: String)
-      + setStart(start: Date)
-      + setEnd(end: String)
-      + setAreas(areas: List<Area>)
-    }
-
-
-    class EventBuilder implements EventBuilderInterface {
-      - result: Event
-      + reset()
-      + setName(name: String)
-      + setCity(city: String)
-      + setStart(start: Date)
-      + setEnd(end: String)
-      + setAreas(areas: List<Area>)
-      + getResult(): Event
-    }
-
-
-    class EventBuildingDirector {
-      - builder: Builder
-      - {static} instance: EventBuildingDirector
-      - Director(builder: Builder)
-      + {static} getInstance(): EventBuildingDirector
-      + changeBuilder(builder: Builder)
-      + makeEvent(builder: Builder)
-    }
-
-
-    EventBuilderInterface ..> Area
-
-    EventBuilder --> Event 
-
-    EventBuildingDirector --> EventBuilderInterface
-    
-
-    Client --> EventBuildingDirector
-    Client ..> EventBuilder
+  class Event {
+    - name: String
+    - city: String
+    - start: Date
+    - end: Date
+    - areas: List<Area>
+    - category: Category
+    - active: boolean
   }
 
-  class EventRepo {
-    - {static} instance: EventRepo
-    - EventRepo(): EventRepo
-    + {static} getInstance(): EventRepo
-    + saveEvent(event: Event)
+  Event "1, 1" *-- "1, n" Area 
+  Event "0, n" o-- "1, 1" Category
+
+  interface EventBuilderInterface {
+    + reset()
+    + setName(name: String)
+    + setCity(city: String)
+    + setStart(start: Date)
+    + setEnd(end: String)
+    + setAreas(areas: List<Area>)
   }
 
-  class EventService {
-    - {static} instance: EventService
-    - EventService(): EventService
-    + {static} getInstance(): EventService
-    + startEvent(event: Event)
+
+  class EventBuilder implements EventBuilderInterface {
+    - result: Event
+    + reset()
+    + setName(name: String)
+    + setCity(city: String)
+    + setStart(start: Date)
+    + setEnd(end: String)
+    + setAreas(areas: List<Area>)
+    + getResult(): Event
   }
 
-  EventService ..> Event
-  EventRepo ..> Event
+
+  class EventBuildingDirector {
+    - builder: Builder
+    - {static} instance: EventBuildingDirector
+    - Director(builder: Builder)
+    + {static} getInstance(): EventBuildingDirector
+    + changeBuilder(builder: Builder)
+    + makeEvent(builder: Builder)
+  }
+
+
+  EventBuilderInterface ..> Area
+
+  EventBuilder --> Event 
+
+  EventBuildingDirector --> EventBuilderInterface
+  
+
+  Client --> EventBuildingDirector
+  Client ..> EventBuilder
 
   note "Singleton" as N1
 
-  N1 .. EventService
-  N1 .. EventRepo
-  N1 .. UserService
-  N1 .. UserRepo
   N1 .. EventBuildingDirector
 
   class User { 
@@ -100,33 +81,83 @@
     - institution: String
     - areas: List<Area>
     - roles: List<Role>
+    - reviews: List<Review>
+    - articles: List<Article>
   }
 
-  User "0, n" --> "0, n" Area
-
-  class UserRepo {
-    - {static} instance: UserRepo
-    - UserRepo(): UserRepo
-    + {static} getInstance(): UserRepo
-    + saveUser(user: User)
-  }
-
-  class UserService {
-    - {static} instance: UserService
-    - UserService(): UserService
-    + {static} getInstance(): UserService
-    + createUser(user: User)
-  }
-
-  UserService ..> User
-  UserRepo ..> User
-
+  User "0, n" o-- "0, n" Area
 
   enum Role {
-    - title: String
+    RES
+    REV
+    CRD
   }
-  note right: RES,\nREV,\nCRD
 
-  User "0, n" *.. "1, n" Role
+  User "0, n" o.. "1, n" Role
 
+  class Article {
+    - id: Integer
+    - title: String
+    - abstractText: String
+    - authors: List<User>
+    - areas: List<Area>
+    - reviews: List<Review>
+    - status: ArticleState
+    + setStatus(status: ArticleState)
+    + nextStatus()
+  }
+
+  Article "0, n" o-- "1, n" User : authors
+  Article "0, n" o-- "1, n" Area : areas
+  Article "1, 1" --o "0, n" Review
+
+  enum Verdict {
+    REJECT
+    WEAK_REJECT
+    WEAK_ACCEPT
+    ACCEPT
+  }
+
+  class Review {
+    - id: Integer
+    - contributions: String
+    - critiques: String
+    - verdict: Verdict
+    - article: Article
+    - reviewer: User
+  }
+
+  Review "0, n" o-- "1, 1" Verdict
+  Review "0, n" o-- "1, 1" User : reviewer
+
+  interface ArticleState {
+    + nextStatus()
+  }
+
+  abstract class ArticleStateDefault implements ArticleState {
+    - article: Article
+    + {abstract} nextStatus()
+  }
+
+  class SubmittedState extends ArticleStateDefault {
+    - article: Article
+    + nextStatus()
+  }
+
+  class UnderReviewState extends ArticleStateDefault {
+    - article: Article
+    + nextStatus()
+  }
+
+  class AcceptedState extends ArticleStateDefault {
+    - article: Article
+    + nextStatus()
+  }
+
+  class RejectedState extends ArticleStateDefault {
+    - article: Article
+    + nextStatus()
+  }
+
+  Article "1, 1" o-- "1, 1" ArticleState
 @enduml

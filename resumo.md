@@ -66,7 +66,6 @@
     - Banco (Repositórios)
 
 ## Ideias mirabolantes
-- Artigo deve se relaciuonar come evento
-- Cortar Builder de event fora
 - Strategy quando for escrever o codigo de distruibuicao de artigos, para futuras implementacoes, caso mude algo
 - Acho que tem um Observer na questao do artigo esperando veredito (para envio de email)
+- Observer ao resetar event

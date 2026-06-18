@@ -1,4 +1,5 @@
 @startuml modelo
+  skinparam linetype ortho
 
   enum Category {
     FULL
@@ -12,8 +13,8 @@
     - articles: List<Article>
   }
 
-  skinparam packageStyle rectangle
-  package Client {}
+  ' skinparam packageStyle rectangle
+  ' package Client {}
 
   class Event {
     - name: String
@@ -21,58 +22,13 @@
     - start: Date
     - end: Date
     - areas: List<Area>
+    - articles: List<Article>
     - category: Category
     - active: boolean
   }
 
-  Event "1, 1" *-- "1, n" Area 
-  Event "0, n" o-- "1, 1" Category
-
-  interface EventBuilderInterface {
-    + reset()
-    + setName(name: String)
-    + setCity(city: String)
-    + setStart(start: Date)
-    + setEnd(end: String)
-    + setAreas(areas: List<Area>)
-  }
-
-
-  class EventBuilder implements EventBuilderInterface {
-    - result: Event
-    + reset()
-    + setName(name: String)
-    + setCity(city: String)
-    + setStart(start: Date)
-    + setEnd(end: String)
-    + setAreas(areas: List<Area>)
-    + getResult(): Event
-  }
-
-
-  class EventBuildingDirector {
-    - builder: Builder
-    - {static} instance: EventBuildingDirector
-    - Director(builder: Builder)
-    + {static} getInstance(): EventBuildingDirector
-    + changeBuilder(builder: Builder)
-    + makeEvent(builder: Builder)
-  }
-
-
-  EventBuilderInterface ..> Area
-
-  EventBuilder --> Event 
-
-  EventBuildingDirector --> EventBuilderInterface
-  
-
-  Client --> EventBuildingDirector
-  Client ..> EventBuilder
-
-  note "Singleton" as N1
-
-  N1 .. EventBuildingDirector
+  Event *-- Area 
+  Event o-- Category
 
   class User { 
     - name: String 
@@ -85,7 +41,7 @@
     - articles: List<Article>
   }
 
-  User "0, n" o-- "0, n" Area
+  User o-- Area
 
   enum Role {
     RES
@@ -93,23 +49,7 @@
     CRD
   }
 
-  User "0, n" o.. "1, n" Role
-
-  class Article {
-    - id: Integer
-    - title: String
-    - abstractText: String
-    - authors: List<User>
-    - areas: List<Area>
-    - reviews: List<Review>
-    - status: ArticleState
-    + setStatus(status: ArticleState)
-    + nextStatus()
-  }
-
-  Article "0, n" o-- "1, n" User : authors
-  Article "0, n" o-- "1, n" Area : areas
-  Article "1, 1" --o "0, n" Review
+  User o-- Role
 
   enum Verdict {
     REJECT
@@ -127,37 +67,81 @@
     - reviewer: User
   }
 
-  Review "0, n" o-- "1, 1" Verdict
-  Review "0, n" o-- "1, 1" User : reviewer
+  package State {
+    class Article {
+      - id: Integer
+      - title: String
+      - abstractText: String
+      - event: Event
+      - authors: List<User>
+      - areas: List<Area>
+      - reviews: List<Review>
+      - status: ArticleState
+      + setStatus(status: ArticleState)
+      + nextStatus()
+    }
 
-  interface ArticleState {
-    + nextStatus()
+    Article o-- User : authors
+    Article o-- Area : areas
+    Article --o Review
+    Article o-- Event
+
+
+    Review o-- Verdict
+    Review o-- User : reviewer
+
+    interface ArticleState {
+      + nextStatus()
+    }
+
+    abstract class ArticleStateDefault {
+      - article: Article
+      + {abstract} nextStatus()
+    }
+
+    ArticleStateDefault .up.|> ArticleState
+
+    class SubmittedState extends ArticleStateDefault {
+      - article: Article
+      + nextStatus()
+    }
+
+    class UnderReviewState extends ArticleStateDefault {
+      - article: Article
+      + nextStatus()
+    }
+
+    class AcceptedState extends ArticleStateDefault {
+      - article: Article
+      + nextStatus()
+    }
+
+    class RejectedState extends ArticleStateDefault {
+      - article: Article
+      + nextStatus()
+    }
+
+    Article o-left- ArticleState
   }
 
-  abstract class ArticleStateDefault implements ArticleState {
-    - article: Article
-    + {abstract} nextStatus()
+  package Strategy {
+    class Distributor {
+      - strategy: DistributionStrategy
+      + setStrategy(strat: Strategy)
+      + distribute(articles: List<Article>, revisors: List<User>)
+    }
+
+    interface DistributionStrategy {
+      + distribute(articles: List<Article>, revisors: List<User>)
+    }
+
+    class PairStrategy implements DistributionStrategy {
+      + distribute(articles: List<Article>, revisors: List<User>)
+    }
+
+    Distributor --> DistributionStrategy
+    Distributor ..> Article
+    Distributor ..> User
   }
 
-  class SubmittedState extends ArticleStateDefault {
-    - article: Article
-    + nextStatus()
-  }
-
-  class UnderReviewState extends ArticleStateDefault {
-    - article: Article
-    + nextStatus()
-  }
-
-  class AcceptedState extends ArticleStateDefault {
-    - article: Article
-    + nextStatus()
-  }
-
-  class RejectedState extends ArticleStateDefault {
-    - article: Article
-    + nextStatus()
-  }
-
-  Article "1, 1" o-- "1, 1" ArticleState
 @enduml

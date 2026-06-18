@@ -55,7 +55,7 @@
 - Proxy (talvez melhor para autorização do que Chain, considerando o escopo e facilidade de implementar)
 - Facade (Um service por exemplo)
 - Observer (envio de artigo p/ revisão)
-- Singleton (p/ repositories e services)
+- Singleton (p/ repositories, algumas classes de apresentacao e services)
 - Strategy
 - Command
 
@@ -64,3 +64,9 @@
     - Apresentação
     - Lógica (onde se enquadrariam os padrões, serviços, etc)
     - Banco (Repositórios)
+
+## Ideias mirabolantes
+- Artigo deve se relaciuonar come evento
+- Cortar Builder de event fora
+- Strategy quando for escrever o codigo de distruibuicao de artigos, para futuras implementacoes, caso mude algo
+- Acho que tem um Observer na questao do artigo esperando veredito (para envio de email)

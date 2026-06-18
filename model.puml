@@ -84,7 +84,6 @@
     Article o-- User : authors
     Article o-- Area : areas
     Article --o Review
-    Article o-- Event
 
 
     Review o-- Verdict
@@ -128,20 +127,94 @@
     class Distributor {
       - strategy: DistributionStrategy
       + setStrategy(strat: Strategy)
-      + distribute(articles: List<Article>, revisors: List<User>)
+      + distribute(articles: List<Article>, reviewers: List<User>)
     }
 
     interface DistributionStrategy {
-      + distribute(articles: List<Article>, revisors: List<User>)
+      + distribute(articles: List<Article>, reviewers: List<User>)
     }
 
     class PairStrategy implements DistributionStrategy {
-      + distribute(articles: List<Article>, revisors: List<User>)
+      + distribute(articles: List<Article>, reviewers: List<User>)
     }
 
     Distributor --> DistributionStrategy
     Distributor ..> Article
     Distributor ..> User
   }
+
+  class AuthService << (S,#FF7700) Singleton >> {
+    - currUser: Optional<User>
+    - userService: UserService
+    + authenticate(email: String, password: String)
+    + isAuthenticated(): boolean
+    + getCurrUserRoles(): List<Role>
+    + logout()
+  }
+
+  AuthService o-- User
+
+  class UserService {
+    - repo: UserRepository
+    + getByEmail(email): Optional<User>
+    + createUser(name, email, password, institution)
+    + demoteReviewers()
+  }
+
+  UserService --> User
+  AuthService o-- UserService
+
+  UserService o-- UserRepository
+
+  class EventService {
+    - repo: Repository<Event, Integer>
+    - userService: UserService
+    + start(name, city, start, end, category): Event
+    + reset()
+    + addAreas(areas)
+  }
+
+  EventService o-- Repository
+  EventService o-- AreaService
+  EventService o-- UserService
+  EventService o-- ArticleService
+  EventService o-- ReviewService
+  EventService --> Event
+
+  interface Repository<T, ID> {
+    + findAll(): List<T>
+    + findById(id: ID): T
+    + save(object: T): T
+    + deleteAll()
+  }
+
+  interface UserRepository<User, Integer> extends Repository {
+    + findAll(): List<User>
+    + findById(id: Integer): User
+    + findByEmail(email): User
+    + save(object: User): User
+    + deleteAll()
+  }
+
+  class ArticleService {
+    - repo: Repository<Article, Integer>
+    + removeAll()
+  }
+
+  ArticleService o-- Repository
+
+  class ReviewService {
+    - repo: Repository<Review, Integer>
+    + removeAll()
+  }
+
+  ReviewService o-- Repository
+
+  class AreaService {
+    - repo: Repository<Area, Integer>
+    + removeAll()
+  }
+
+  AreaService o-- Repository
 
 @enduml

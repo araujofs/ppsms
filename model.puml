@@ -1,22 +1,32 @@
 @startuml modelo
   skinparam linetype ortho
 
+  enum Verdict {
+    REJECT
+    WEAK_REJECT
+    WEAK_ACCEPT
+    ACCEPT
+  }
+
   enum Category {
     FULL
     SHORT
     DEMO
   }
 
+  enum Role {
+    RES
+    REV
+    CRD
+  }
+
   class Area {
     - title: String
-    - event: Event
+    - event: SubmissionEvent
     - articles: List<Article>
   }
 
-  ' skinparam packageStyle rectangle
-  ' package Client {}
-
-  class Event {
+  class SubmissionEvent {
     - name: String
     - city: String
     - start: Date
@@ -27,8 +37,8 @@
     - active: boolean
   }
 
-  Event *-- Area 
-  Event o-- Category
+  SubmissionEvent *-- Area 
+  SubmissionEvent o-- Category
 
   class User { 
     - name: String 
@@ -42,21 +52,7 @@
   }
 
   User o-- Area
-
-  enum Role {
-    RES
-    REV
-    CRD
-  }
-
   User o-- Role
-
-  enum Verdict {
-    REJECT
-    WEAK_REJECT
-    WEAK_ACCEPT
-    ACCEPT
-  }
 
   class Review {
     - id: Integer
@@ -67,60 +63,89 @@
     - reviewer: User
   }
 
+  Review o-- Verdict
+  Review o-- User : reviewer
+
   package State {
     class Article {
       - id: Integer
       - title: String
       - abstractText: String
-      - event: Event
+      - event: SubmissionEvent
       - authors: List<User>
       - areas: List<Area>
       - reviews: List<Review>
       - status: ArticleState
       + setStatus(status: ArticleState)
-      + nextStatus()
     }
 
     Article o-- User : authors
     Article o-- Area : areas
+
+    ' inverter essa relacao
     Article --o Review
-
-
-    Review o-- Verdict
-    Review o-- User : reviewer
+    Article o-left- ArticleState
 
     interface ArticleState {
-      + nextStatus()
+      + startReview()
+      + accept()
+      + reject()
+      + isFinished(): boolean
+      + isReviewable(): boolean
+      + isAssignableToReviewer(): boolean
     }
 
     abstract class ArticleStateDefault {
       - article: Article
-      + {abstract} nextStatus()
+      + startReview()
+      + accept()
+      + reject()
+      + isFinished(): boolean
+      + isReviewable(): boolean
+      + isAssignableToReviewer(): boolean
     }
 
     ArticleStateDefault .up.|> ArticleState
 
     class SubmittedState extends ArticleStateDefault {
       - article: Article
-      + nextStatus()
+      + startReview()
+      + accept()
+      + reject()
+      + isFinished(): boolean
+      + isReviewable(): boolean
+      + isAssignableToReviewer(): boolean
     }
 
     class UnderReviewState extends ArticleStateDefault {
       - article: Article
-      + nextStatus()
+      + startReview()
+      + accept()
+      + reject()
+      + isFinished(): boolean
+      + isReviewable(): boolean
+      + isAssignableToReviewer(): boolean
     }
 
     class AcceptedState extends ArticleStateDefault {
       - article: Article
-      + nextStatus()
+      + startReview()
+      + accept()
+      + reject()
+      + isFinished(): boolean
+      + isReviewable(): boolean
+      + isAssignableToReviewer(): boolean
     }
 
     class RejectedState extends ArticleStateDefault {
       - article: Article
-      + nextStatus()
+      + startReview()
+      + accept()
+      + reject()
+      + isFinished(): boolean
+      + isReviewable(): boolean
+      + isAssignableToReviewer(): boolean
     }
-
-    Article o-left- ArticleState
   }
 
   package Strategy {
@@ -130,6 +155,10 @@
       + distribute(articles: List<Article>, reviewers: List<User>)
     }
 
+    Distributor --> DistributionStrategy
+    Distributor ..> Article
+    Distributor ..> User
+
     interface DistributionStrategy {
       + distribute(articles: List<Article>, reviewers: List<User>)
     }
@@ -137,10 +166,6 @@
     class PairStrategy implements DistributionStrategy {
       + distribute(articles: List<Article>, reviewers: List<User>)
     }
-
-    Distributor --> DistributionStrategy
-    Distributor ..> Article
-    Distributor ..> User
   }
 
   class AuthService << (S,#FF7700) Singleton >> {
@@ -152,34 +177,36 @@
     + logout()
   }
 
+  AuthService o-- UserService
   AuthService o-- User
 
-  class UserService {
+  class UserService implements Subscriber {
     - repo: UserRepository
     + getByEmail(email): Optional<User>
     + createUser(name, email, password, institution)
     + demoteReviewers()
+    + update(event: SubmissionEventStartedEvent)
   }
 
   UserService --> User
-  AuthService o-- UserService
-
   UserService o-- UserRepository
+  UserService ..> SubmissionEventStartedEvent
 
-  class EventService {
-    - repo: Repository<Event, Integer>
-    - userService: UserService
-    + start(name, city, start, end, category): Event
+  class SubmissionEventService {
+    - repo: Repository<SubmissionEvent, Integer>
+    - publisher: Publisher<T>
+    + start(name, city, start, end, category): SubmissionEvent
     + reset()
     + addAreas(areas)
   }
 
-  EventService o-- Repository
-  EventService o-- AreaService
-  EventService o-- UserService
-  EventService o-- ArticleService
-  EventService o-- ReviewService
-  EventService --> Event
+  SubmissionEventService o-- Repository
+  SubmissionEventService o-- AreaService
+  SubmissionEventService o-- UserService
+  SubmissionEventService o-- ArticleService
+  SubmissionEventService o-- ReviewService
+  SubmissionEventService --> SubmissionEvent
+  SubmissionEventService o-- EventPublisher
 
   interface Repository<T, ID> {
     + findAll(): List<T>
@@ -187,6 +214,7 @@
     + save(object: T): T
     + deleteAll()
   }
+  note left of Repository : Interface com tipo genérico
 
   interface UserRepository<User, Integer> extends Repository {
     + findAll(): List<User>
@@ -196,25 +224,51 @@
     + deleteAll()
   }
 
-  class ArticleService {
+  note right of UserRepository : Extensão de Repository com tipo definido
+
+  class ArticleService implements Subscriber {
     - repo: Repository<Article, Integer>
     + removeAll()
+    + update(event: SubmissionEventStartedEvent)
   }
 
+  ArticleService ..> SubmissionEventStartedEvent
   ArticleService o-- Repository
 
-  class ReviewService {
+  class ReviewService implements Subscriber {
     - repo: Repository<Review, Integer>
     + removeAll()
+    + update(event: SubmissionEventStartedEvent)
   }
 
+  ReviewService ..> SubmissionEventStartedEvent
   ReviewService o-- Repository
 
-  class AreaService {
+  class AreaService implements Subscriber {
     - repo: Repository<Area, Integer>
     + removeAll()
+    + update(event: SubmissionEventStartedEvent)
   }
 
+  AreaService ..> SubmissionEventStartedEvent
   AreaService o-- Repository
+  
+  class EventPublisher {
+    - subscribers: Map<Class<?>, List<Subscriber<?>>>
+    + sub<T>(eventType: Class<T>, s: Subscriber<T>)
+    + unsub<T>(eventType: Class<T>, s: Subscriber<T>)
+    + publish<T>(event: T)
+  }
+
+  EventPublisher --> Subscriber
+
+  interface Subscriber<T> {
+    + update(event: T)
+  } 
+  note left of Subscriber : Interface com tipo genérico
+
+  class SubmissionEventStartedEvent {
+    - article: Article
+  }
 
 @enduml

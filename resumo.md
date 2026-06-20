@@ -1,3 +1,5 @@
+# Visão geral
+
 ## Atores
 
 - Usuário
@@ -40,12 +42,12 @@
   - fracamente aceito
   - aceito
 - Visualizar dados do evento como coordenador:
-    - número de
-        - artigos submetidos
-        - revisores
-        - artigos avaliados
-        - artigos pendentes
-    - relação de artigos pendentes e avaliador responsável
+  - número de
+    - artigos submetidos
+    - revisores
+    - artigos avaliados
+    - artigos pendentes
+  - relação de artigos pendentes e avaliador responsável
 - Notificar autores no final do ciclo de revisões (acho que é ao revisar todos os artigos ou na data determinada)
 - Extra ???
 
@@ -60,12 +62,14 @@
 - Command
 
 ## Ideias gerais
+
 - Separar em camadas
-    - Apresentação
-    - Lógica (onde se enquadrariam os padrões, serviços, etc)
-    - Banco (Repositórios)
+  - Apresentação
+  - Lógica (onde se enquadrariam os padrões, serviços, etc)
+  - Banco (Repositórios)
 
 ## Ideias mirabolantes
-- Strategy quando for escrever o codigo de distruibuicao de artigos, para futuras implementacoes, caso mude algo
+
 - Acho que tem um Observer na questao do artigo esperando veredito (para envio de email)
-- Observer ao resetar event
+- Command na questão de coordenador convidar pesquisador para ser revisor
+  - Esse comando precisa ser adiado porque o usuário, apesar de não precisar aceitar, ainda precisa dizer quais temas sabe como revisor

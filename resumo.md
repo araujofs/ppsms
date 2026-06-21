@@ -73,3 +73,4 @@
 - Acho que tem um Observer na questao do artigo esperando veredito (para envio de email)
 - Command na questão de coordenador convidar pesquisador para ser revisor
   - Esse comando precisa ser adiado porque o usuário, apesar de não precisar aceitar, ainda precisa dizer quais temas sabe como revisor
+- Command para uma possível funcionalidade de Rebbutal.

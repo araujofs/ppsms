@@ -34,9 +34,16 @@
     - artigos submetidos
     - revisores
     - artigos avaliados
+      - artigos aceitos e rejeitados contam como avaliados
     - artigos pendentes
-  - relação de artigos pendentes e avaliador responsável
+      - artigos em revisão e em consenso contam como pendentes
+  - relação de artigos pendentes e avaliador responsável 
 - Notificar autores no final do ciclo de revisões (acho que é ao revisar todos os artigos ou na data determinada)
+  - o envio deve ser real, não apenas uma mensagem no console
+    - autores de artigos aceitos e rejeitados recebem email
+    - o email deve informar o resultado final do artigo
+    - o email deve incluir os pareceres dos revisores
+    - autores só recebem os pareceres após o artigo estar aceito ou rejeitado
 
 ## Fluxo do pesquisador/autor
 
@@ -71,6 +78,11 @@
   - o sistema deve priorizar revisores com maior compatibilidade com as áreas temáticas do artigo
     - um autor tem 3 áreas temáticas de compat. outro apenas duas, o com mais ganha o artigo
   - o autor sempre aceita o artigo (não há opção)
+  - cada artigo deve ser distribuído para 2 revisores
+  - a distribuição deve considerar apenas revisores do comitê técnico do evento atual
+  - se não houver 2 revisores compatíveis, completar com revisores disponíveis mesmo sem compatibilidade
+  - a notificação ao revisor deve informar o artigo recebido e o prazo máximo para concluir a revisão
+
 - Concluir artigo após os 2 pareceres:
   - se os dois vereditos forem positivos, o artigo passa para aceito
   - se os dois vereditos forem negativos, o artigo passa para rejeitado
@@ -104,4 +116,3 @@
 - Acho que tem um Observer na questao do artigo esperando veredito (para envio de email)
 - Command na questão de coordenador convidar pesquisador para ser revisor
   - Esse comando precisa ser adiado porque o usuário, apesar de não precisar aceitar, ainda precisa dizer quais temas sabe como revisor
-- Command para uma possível funcionalidade de Rebbutal.

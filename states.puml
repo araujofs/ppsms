@@ -2,8 +2,11 @@
 
   [*] --> Submitted : Usuário submete artigo
   Submitted --> UnderReview : Artigo é entregue aos revisores
-  UnderReview --> Accepted : Artigo aceito pelos revisores
-  UnderReview --> Rejected : Artigo rejeitado pelos revisores
+  UnderReview --> Accepted : 2 pareceres positivos
+  UnderReview --> Rejected : 2 pareceres negativos
+  UnderReview --> InConsensus : Pareceres conflitantes
+  InConsensus --> Accepted : Consenso por aceite
+  InConsensus --> Rejected : Consenso por rejeição
 
   Accepted --> [*]
   Rejected --> [*]

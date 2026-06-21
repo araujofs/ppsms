@@ -25,6 +25,7 @@
   - áreas são cadastradas pelo coordenador
   - autores usam essas áreas para classificar artigos
   - revisores usam essas áreas para declarar expertise
+  - as áreas são usadas para calcular compatibilidade entre artigos e revisores
 - Convidar pesquisadores para serem revisores
   - o pesquisador convidado seleciona suas áreas temáticas ao entrar com sua conta e abrir o sistema
   - essas áreas serão usadas na distribuição automática dos artigos
@@ -88,7 +89,8 @@
 - Observer (envio de artigo p/ revisão)
 - Singleton (p/ repositories, algumas classes de apresentacao e services)
 - Strategy
-- Command
+- Command (para ações como convidar revisor, submeter artigo, etc)
+- state (talvez para o estado do artigo, mas não sei se compensa a complexidade)
 
 ## Ideias gerais
 

@@ -16,6 +16,9 @@
   - Full paper
   - Short paper
   - Demo
+  - data limite para submissão
+  - ao iniciar um novo evento, os dados do evento anterior são desconsiderados
+  - pesquisadores continuam cadastrados, mas revisores/artigos/avaliações/áreas pertencem ao evento atual
 - Cadastrar áreas temáticas
 - Convidar pesquisadores para serem revisores (fazer com que o pesquisador convidado tenha que selecionar as áreas temáticas ao entrar com sua conta e abrir o sistema)
 - Submeter artigo com nome, resumo, coautores e áreas temáticas apenas se estiver no período de submissão, caso contrário mostrar mensagem
@@ -23,6 +26,7 @@
   - pendente (deriva dos mais específicos)
     - submetido
     - revisão
+    - em consenso
   - concluído
     - aceito
     - rejeitado
@@ -41,6 +45,11 @@
   - fracamente rejeitado
   - fracamente aceito
   - aceito
+- Concluir artigo após os 2 pareceres:
+  - se os dois vereditos forem positivos, o artigo passa para aceito
+  - se os dois vereditos forem negativos, o artigo passa para rejeitado
+  - se houver conflito entre um parecer positivo e um negativo, o artigo passa para em consenso
+  - em consenso, os revisores conversam e registram um veredito final consensual
 - Visualizar dados do evento como coordenador:
   - número de
     - artigos submetidos

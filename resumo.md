@@ -7,11 +7,13 @@
     - Revisor (vira revisor através de convite do coordenador)
   - Coordenador (tem apenas 1)
 
-## Requisitos
+## Fluxo geral
 
 - Autenticar com email e senha
   - Usuário coordenador deve ser pré-configurado
-- Cadastrar usuários (pesquisador) com email, senha e instituição
+
+## Fluxo do coordenador
+
 - Iniciar evento com nome, cidade, período (range de datas) e categoria dentre:
   - Full paper
   - Short paper
@@ -20,7 +22,24 @@
   - ao iniciar um novo evento, os dados do evento anterior são desconsiderados
   - pesquisadores continuam cadastrados, mas revisores/artigos/avaliações/áreas pertencem ao evento atual
 - Cadastrar áreas temáticas
-- Convidar pesquisadores para serem revisores (fazer com que o pesquisador convidado tenha que selecionar as áreas temáticas ao entrar com sua conta e abrir o sistema)
+  - áreas são cadastradas pelo coordenador
+  - autores usam essas áreas para classificar artigos
+  - revisores usam essas áreas para declarar expertise
+- Convidar pesquisadores para serem revisores
+  - o pesquisador convidado seleciona suas áreas temáticas ao entrar com sua conta e abrir o sistema
+  - essas áreas serão usadas na distribuição automática dos artigos
+- Visualizar dados do evento como coordenador:
+  - número de
+    - artigos submetidos
+    - revisores
+    - artigos avaliados
+    - artigos pendentes
+  - relação de artigos pendentes e avaliador responsável
+- Notificar autores no final do ciclo de revisões (acho que é ao revisar todos os artigos ou na data determinada)
+
+## Fluxo do pesquisador/autor
+
+- Cadastrar usuários (pesquisador) com email, senha e instituição
 - Submeter artigo com nome, resumo, coautores e áreas temáticas apenas se estiver no período de submissão, caso contrário mostrar mensagem
 - Visualizar artigos submetidos pelo autor logado no momento com status:
   - pendente (deriva dos mais específicos)
@@ -30,6 +49,18 @@
   - concluído
     - aceito
     - rejeitado
+
+## Fluxo do revisor
+
+- Visualizar artigos para revisão (como autor)
+- Avaliar artigo escrevendo críticas (texto), contribuições (outro texto) e dando um veredito final dentre:
+  - recusado
+  - fracamente rejeitado
+  - fracamente aceito
+  - aceito
+
+## Fluxo de revisão dos artigos
+
 - Distribuir artigos para revisores seguindo algumas regras:
   - distribuir conforme áreas temáticas dos revisores, aceitando artigos sem aderência às áreas apenas em casos em que faltar revisor compatível
   - distribuir igualmente tanto quanto possível
@@ -39,25 +70,14 @@
   - o sistema deve priorizar revisores com maior compatibilidade com as áreas temáticas do artigo
     - um autor tem 3 áreas temáticas de compat. outro apenas duas, o com mais ganha o artigo
   - o autor sempre aceita o artigo (não há opção)
-- Visualizar artigos para revisão (como autor)
-- Avaliar artigo escrevendo críticas (texto), contribuições (outro texto) e dando um veredito final dentre:
-  - recusado
-  - fracamente rejeitado
-  - fracamente aceito
-  - aceito
 - Concluir artigo após os 2 pareceres:
   - se os dois vereditos forem positivos, o artigo passa para aceito
   - se os dois vereditos forem negativos, o artigo passa para rejeitado
   - se houver conflito entre um parecer positivo e um negativo, o artigo passa para em consenso
   - em consenso, os revisores conversam e registram um veredito final consensual
-- Visualizar dados do evento como coordenador:
-  - número de
-    - artigos submetidos
-    - revisores
-    - artigos avaliados
-    - artigos pendentes
-  - relação de artigos pendentes e avaliador responsável
-- Notificar autores no final do ciclo de revisões (acho que é ao revisar todos os artigos ou na data determinada)
+
+## RF10 / Extra
+
 - Extra ???
 
 ## Padrões que provavelmente serão usados em algum lugar

@@ -1,11 +1,11 @@
 @startuml states
 
-  [*] --> Submetido : Usuário submete artigo
-  Submetido --> Revisão : Artigo é entregue ao revisor
-  Revisão --> Aceito : Artigo aceito pelo revisor
-  Revisão --> Rejeitado : Artigo rejeitado pelo revisor
+  [*] --> Submitted : Usuário submete artigo
+  Submitted --> UnderReview : Artigo é entregue aos revisores
+  UnderReview --> Accepted : Artigo aceito pelos revisores
+  UnderReview --> Rejected : Artigo rejeitado pelos revisores
 
-  Aceito --> [*]
-  Rejeitado --> [*]
+  Accepted --> [*]
+  Rejected --> [*]
 
 @enduml

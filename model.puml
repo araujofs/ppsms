@@ -82,7 +82,7 @@
     Article o-- User : authors
     Article o-- Area : areas
 
-    ' inverter essa relacao
+    ' inverter essa relacao '
     Article --o Review
     Article o-left- ArticleState
 
@@ -149,15 +149,15 @@
   }
 
   package Strategy {
-    class Distributor {
+    class DistributionService {
       - strategy: DistributionStrategy
       + setStrategy(strat: Strategy)
       + distribute(articles: List<Article>, reviewers: List<User>)
     }
 
-    Distributor --> DistributionStrategy
-    Distributor ..> Article
-    Distributor ..> User
+    DistributionService o-- DistributionStrategy
+    DistributionService ..> Article
+    DistributionService ..> User
 
     interface DistributionStrategy {
       + distribute(articles: List<Article>, reviewers: List<User>)
@@ -171,19 +171,21 @@
   class AuthService << (S,#FF7700) Singleton >> {
     - currUser: Optional<User>
     - userService: UserService
-    + authenticate(email: String, password: String)
+    + authenticate(data: AuthData): User
     + isAuthenticated(): boolean
     + getCurrUserRoles(): List<Role>
+    + getCurrUser(): User
     + logout()
   }
 
   AuthService o-- UserService
-  AuthService o-- User
+  AuthService --> User
+  AuthService ..> AuthData
 
   class UserService implements Subscriber {
     - repo: UserRepository
     + getByEmail(email): Optional<User>
-    + createUser(name, email, password, institution)
+    + createUser(user: User)
     + demoteReviewers()
     + update(event: SubmissionEventStartedEvent)
   }
@@ -195,7 +197,7 @@
   class SubmissionEventService {
     - repo: Repository<SubmissionEvent, Integer>
     - publisher: Publisher<T>
-    + start(name, city, start, end, category): SubmissionEvent
+    + start(data: SubmissionEvent)
     + reset()
     + addAreas(areas)
   }
@@ -205,7 +207,7 @@
   SubmissionEventService o-- UserService
   SubmissionEventService o-- ArticleService
   SubmissionEventService o-- ReviewService
-  SubmissionEventService --> SubmissionEvent
+  SubmissionEventService ..> SubmissionEvent
   SubmissionEventService o-- EventPublisher
 
   interface Repository<T, ID> {
@@ -219,7 +221,7 @@
   interface UserRepository<User, Integer> extends Repository {
     + findAll(): List<User>
     + findById(id: Integer): User
-    + findByEmail(email): User
+    + findByEmail(email: String): User
     + save(object: User): User
     + deleteAll()
   }
@@ -267,8 +269,11 @@
   } 
   note left of Subscriber : Interface com tipo genérico
 
-  class SubmissionEventStartedEvent {
-    - article: Article
+  record SubmissionEventStartedEvent
+
+  class AuthData { 
+    + email: String 
+    + password: String
   }
 
 @enduml

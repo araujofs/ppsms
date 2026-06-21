@@ -104,6 +104,25 @@
 - Command (para ações como convidar revisor, submeter artigo, etc)
 - state (talvez para o estado do artigo, mas não sei se compensa a complexidade)
 
+### Um pouco mais de detalhes sobre os padrões
+
+- proxy para autorização
+  - o proxy pode ser usado para verificar se o usuário tem permissão para realizar uma ação antes de delegar a chamada para o objeto real que executa a ação
+
+- observer para notificar revisores sobre novos artigos para revisão
+  - quando um artigo é submetido e distribuído para revisão, os revisores responsáveis podem ser notificados através de um mecanismo de observer
+
+- command para ações como convidar revisor, submeter artigo, etc
+  - cada ação pode ser encapsulada em um comando específico, permitindo que sejam executadas de forma consistente e possivelmente adiada
+
+- state para o estado do artigo
+  - o estado do artigo pode ser representado por um objeto de estado. cada estado (submetido, revisão, em consenso, aceito, rejeitado) pode ser uma classe diferente que define o comportamento específico para aquele estado. isso pode ajudar a organizar a lógica relacionada ao ciclo de vida do artigo, mas é importante avaliar se a complexidade adicional vale a pena para este caso específico
+
+- singleton para repositories, algumas classes de apresentação e services
+
+- facade para services
+
+
 ## Ideias gerais
 
 - Separar em camadas

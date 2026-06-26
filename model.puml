@@ -1,4 +1,4 @@
-@startuml modelo
+@startuml
   skinparam linetype ortho
 
   enum Verdict {
@@ -97,12 +97,12 @@
 
     abstract class ArticleStateDefault {
       - article: Article
-      + startReview()
-      + accept()
-      + reject()
-      + isFinished(): boolean
-      + isReviewable(): boolean
-      + isAssignableToReviewer(): boolean
+      + {abstract} startReview()
+      + {abstract} accept()
+      + {abstract} reject()
+      + {abstract} isFinished(): boolean
+      + {abstract} isReviewable(): boolean
+      + {abstract} isAssignableToReviewer(): boolean
     }
 
     ArticleStateDefault .up.|> ArticleState

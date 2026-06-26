@@ -14,13 +14,12 @@
 
 ## Fluxo do coordenador
 
-- Iniciar evento com nome, cidade, período (range de datas) e categoria dentre:
+- Iniciar evento com nome, data limite para submissão, cidade, período (range de datas) e categoria dentre:
   - Full paper
   - Short paper
   - Demo
-  - data limite para submissão
   - ao iniciar um novo evento, os dados do evento anterior são desconsiderados
-  - pesquisadores continuam cadastrados, mas revisores/artigos/avaliações/áreas pertencem ao evento atual
+  - pesquisadores e coordenador continuam cadastrados, mas revisores/artigos/avaliações/áreas pertencem ao evento atual
 - Cadastrar áreas temáticas
   - áreas são cadastradas pelo coordenador
   - autores usam essas áreas para classificar artigos
@@ -37,23 +36,17 @@
       - artigos aceitos e rejeitados contam como avaliados
     - artigos pendentes
       - artigos em revisão e em consenso contam como pendentes
-  - relação de artigos pendentes e avaliador responsável 
-- Notificar autores no final do ciclo de revisões (acho que é ao revisar todos os artigos ou na data determinada)
-  - o envio deve ser real, não apenas uma mensagem no console
-    - autores de artigos aceitos e rejeitados recebem email
-    - o email deve informar o resultado final do artigo
-    - o email deve incluir os pareceres dos revisores
-    - autores só recebem os pareceres após o artigo estar aceito ou rejeitado
+  - relação de artigos pendentes e avaliador responsável
 
 ## Fluxo do pesquisador/autor
 
-- Cadastrar usuários (pesquisador) com email, senha e instituição
+- Cadastrar usuários  (pesquisador) com email, senha e instituição
 - Submeter artigo com nome, resumo, coautores e áreas temáticas apenas se estiver no período de submissão, caso contrário mostrar mensagem
 - Visualizar artigos submetidos pelo autor logado no momento com status:
   - pendente (deriva dos mais específicos)
     - submetido
     - revisão
-    - em consenso
+    - ~em consenso~ (revisão)
   - concluído
     - aceito
     - rejeitado
@@ -62,7 +55,7 @@
 
 - Visualizar artigos para revisão (como autor)
 - Avaliar artigo escrevendo críticas (texto), contribuições (outro texto) e dando um veredito final dentre:
-  - recusado
+  - rejeitado
   - fracamente rejeitado
   - fracamente aceito
   - aceito
@@ -71,23 +64,40 @@
 
 - Distribuir artigos para revisores seguindo algumas regras:
   - distribuir conforme áreas temáticas dos revisores, aceitando artigos sem aderência às áreas apenas em casos em que faltar revisor compatível
-  - distribuir igualmente tanto quanto possível
-  - não dar a um revisor um artigo do qual é autor ou co-autor
-  - não mostrar ao revisor quem são os autores do artigo que vai avaliar
-  - notificar revisor sobre cada artigo recebido para avaliação
+  - distribuir igualmente tanto quanto possível (no caso de ter mais artigos do que revisores alguém vai ficar com mais)
+  - não dar a um revisor um artigo do qual é autor ou co-autor (máxima)
+  - não mostrar ao revisor quem são os autores do artigo que vai avaliar (máxima)
+  - notificar por email revisor sobre cada artigo recebido para avaliação
   - o sistema deve priorizar revisores com maior compatibilidade com as áreas temáticas do artigo
     - um autor tem 3 áreas temáticas de compat. outro apenas duas, o com mais ganha o artigo
   - o autor sempre aceita o artigo (não há opção)
   - cada artigo deve ser distribuído para 2 revisores
   - a distribuição deve considerar apenas revisores do comitê técnico do evento atual
   - se não houver 2 revisores compatíveis, completar com revisores disponíveis mesmo sem compatibilidade
-  - a notificação ao revisor deve informar o artigo recebido e o prazo máximo para concluir a revisão
+  - a notificação ao revisor deve informar o artigo recebido e o prazo máximo para concluir a revisão (fim do evento como um todo)
+
+- Notificar autores no final da revisão
+  - o envio deve ser real, não apenas uma mensagem no console
+    - autores de artigos aceitos e rejeitados recebem email
+    - o email deve informar o resultado final do artigo
+    - o email deve incluir os pareceres dos revisores
 
 - Concluir artigo após os 2 pareceres:
-  - se os dois vereditos forem positivos, o artigo passa para aceito
-  - se os dois vereditos forem negativos, o artigo passa para rejeitado
-  - se houver conflito entre um parecer positivo e um negativo, o artigo passa para em consenso
-  - em consenso, os revisores conversam e registram um veredito final consensual
+  - Casos aceitos:
+    - aceito + aceito
+    - aceito + fracamente recusado
+  - Casos recusados:
+    - recusado + recusado
+    - recusado + fracamente aceito
+  - Casos de atenção (necessário notificar revisores sobre a necessidade de trocar o veredito de um deles para conclusão real da revisão):
+    - aceito + recusado
+    - fracamente aceito + fracamente recusado
+
+- Notificar autores no final da revisão
+  - o envio deve ser real, não apenas uma mensagem no console
+    - autores de artigos aceitos e rejeitados recebem email
+    - o email deve informar o resultado final do artigo
+    - o email deve incluir os pareceres dos revisores
 
 ## RF10 / Extra
 
@@ -106,22 +116,21 @@
 
 ### Um pouco mais de detalhes sobre os padrões
 
-- proxy para autorização
-  - o proxy pode ser usado para verificar se o usuário tem permissão para realizar uma ação antes de delegar a chamada para o objeto real que executa a ação
+- Proxy
+  - pode ser usado para verificar se o usuário tem permissão para realizar uma ação antes de delegar a chamada para o objeto real que executa a ação (facade)
 
-- observer para notificar revisores sobre novos artigos para revisão
-  - quando um artigo é submetido e distribuído para revisão, os revisores responsáveis podem ser notificados através de um mecanismo de observer
+- Facades por ator englobando os services e expondo só o necessário para a camada de apresentação
 
-- command para ações como convidar revisor, submeter artigo, etc
-  - cada ação pode ser encapsulada em um comando específico, permitindo que sejam executadas de forma consistente e possivelmente adiada
+- Observer
+    - notificar revisores sobre recebimento de artigos para revisão
+    - notificar autores sobre conclusão da revisão
 
-- state para o estado do artigo
-  - o estado do artigo pode ser representado por um objeto de estado. cada estado (submetido, revisão, em consenso, aceito, rejeitado) pode ser uma classe diferente que define o comportamento específico para aquele estado. isso pode ajudar a organizar a lógica relacionada ao ciclo de vida do artigo, mas é importante avaliar se a complexidade adicional vale a pena para este caso específico
+- Command
+  - ao "convidar" um pesquisador para ser revisor, este deve receber inserir as áreas temáticas que tem proficiência para revisar, de maneira que isso precisa acontecer de maneira adiada
+  - provavelmente também na camada de apresentação
 
-- singleton para repositories, algumas classes de apresentação e services
-
-- facade para services
-
+- State para o estado do artigo
+  - cada estado sabe o que pode fazer, evitando vários ifs espalhados por aí
 
 ## Ideias gerais
 
@@ -129,9 +138,7 @@
   - Apresentação
   - Lógica (onde se enquadrariam os padrões, serviços, etc)
   - Banco (Repositórios)
-
-## Ideias mirabolantes
-
-- Acho que tem um Observer na questao do artigo esperando veredito (para envio de email)
-- Command na questão de coordenador convidar pesquisador para ser revisor
-  - Esse comando precisa ser adiado porque o usuário, apesar de não precisar aceitar, ainda precisa dizer quais temas sabe como revisor
+- Facades por ator
+  - CoordinatorFacade
+  - ResearcherFacade
+  - ReviewerFacade

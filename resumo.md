@@ -119,11 +119,15 @@
 - Proxy
   - pode ser usado para verificar se o usuário tem permissão para realizar uma ação antes de delegar a chamada para o objeto real que executa a ação (facade)
 
-- Facades por ator englobando os services e expondo só o necessário para a camada de apresentação
+- Facade
+  - por ator, englobando as ações que o ator tem em seu fluxo, se necessário criar adicionais
+    - reviewer
+    - researcher
+    - coordinator
 
 - Observer
-    - notificar revisores sobre recebimento de artigos para revisão
-    - notificar autores sobre conclusão da revisão
+  - notificar revisores sobre recebimento de artigos para revisão
+  - notificar autores sobre conclusão da revisão
 
 - Command
   - ao "convidar" um pesquisador para ser revisor, este deve receber inserir as áreas temáticas que tem proficiência para revisar, de maneira que isso precisa acontecer de maneira adiada
@@ -132,13 +136,26 @@
 - State para o estado do artigo
   - cada estado sabe o que pode fazer, evitando vários ifs espalhados por aí
 
+- Adapter
+  - na questão de email evitando acoplamento com classe de email concreta
+
 ## Ideias gerais
 
 - Separar em camadas
   - Apresentação
   - Lógica (onde se enquadrariam os padrões, serviços, etc)
   - Banco (Repositórios)
-- Facades por ator
-  - CoordinatorFacade
-  - ResearcherFacade
-  - ReviewerFacade
+
+- As informações serão guardadas em memória, não vai haver banco de fato
+  - na verdade nem mesmo o processo de seed vai ser a partir de um csv ou coisa assim, vamos utilizar um seed a partir de uma classe que vai rodar:
+    - ou a partir de uma  escolha do usuário  de popular a partir do menu, onde ele criaria apenas o evento na mão
+    - ou colocar quando inicializar o app
+
+- Usar interfaces de repositórios evitando acoplamento
+
+- Os repositórios concretos devem armazenar em atributos as informações
+    - os usuários cadastrados ficam como uma lista em UserRepo etc
+
+- Usar a lógica de que o único evento é o atual, ou seja, não tem pra que guardar referência a evento nas classes que tem relacionamento com ele, existe apenas um evento
+
+- Quando novo evento for startado, dados do antigo devem ser descartador, isso deve estar centralizado no service de evento, se for existir

@@ -1,0 +1,176 @@
+@startuml DomainDiagram
+
+' skinparam classAttributeIconSize r
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+title Domínio - Sistema de Submissão e Avaliação de Artigos
+
+package "Domínio" as Domain {
+
+  class User {
+    - id: Integer
+    - email: String
+    - passwordHash: String
+    - institution: String
+    - roles: List<Role>
+    + hasRole(role: Role): boolean
+  }
+
+  enum Role {
+    RESEARCHER
+    COORDINATOR
+  }
+
+  class SubmissionEvent {
+    - id: Integer
+    - name: String
+    - city: String
+    - submissionDeadline: LocalDate
+    - startDate: LocalDate
+    - endDate: LocalDate
+    - category: Category
+    - reviewersPerArticle: int
+    + isSubmissionOpen(today: LocalDate): boolean
+    + getReviewDeadline(): LocalDate
+  }
+
+  enum Category {
+    FULL_PAPER
+    SHORT_PAPER
+    DEMO
+  }
+
+  class Area {
+    - id: Integer
+    - name: String
+  }
+
+  class ReviewerProfile {
+    - id: Integer
+    - researcher: User
+    - expertiseAreas: List<Area>
+    + hasExpertiseIn(area: Area): boolean
+  }
+
+  class ReviewerInvitation {
+    - id: Integer
+    - researcher: User
+    - accepted: boolean
+    + accept(areas: List<Area>): ReviewerProfile
+  }
+
+  class Article {
+    - id: Integer
+    - title: String
+    - abstractText: String
+    - mainAuthor: User
+    - coauthors: List<User>
+    - areas: List<Area>
+    - state: ArticleState
+    + startReview(): void
+    + accept(): void
+    + reject(): void
+    + markAttention(): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + isAuthor(user: User): boolean
+  }
+
+  class Review {
+    - id: Integer
+    - article: Article
+    - reviewer: ReviewerProfile
+    - contribution: String
+    - criticism: String
+    - verdict: Verdict
+    - status: ReviewStatus
+    - dueDate: LocalDate
+    + submit(contribution: String, criticism: String, verdict: Verdict): void
+    + isSubmitted(): boolean
+  }
+
+  enum Verdict {
+    REJECTED
+    WEAK_REJECTED
+    WEAK_ACCEPTED
+    ACCEPTED
+  }
+
+  enum ReviewStatus {
+    ASSIGNED
+    SUBMITTED
+  }
+
+  enum ReviewOutcome {
+    ACCEPTED
+    REJECTED
+    ATTENTION
+    INCOMPLETE
+  }
+
+  class ArticleForReviewDTO {
+    - id: Integer
+    - title: String
+    - abstractText: String
+    - areas: List<String>
+  }
+}
+
+package "State - Estado do Artigo" as StatePkg {
+
+  interface ArticleState <<State>> {
+    + startReview(article: Article): void
+    + accept(article: Article): void
+    + reject(article: Article): void
+    + markAttention(article: Article): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + getName(): String
+  }
+
+  class SubmittedState
+  class UnderReviewState
+  class AttentionState
+  class AcceptedState
+  class RejectedState
+}
+
+User "1" -- "0..*" Article : mainAuthor
+User "0..*" -- "0..*" Article : coauthors
+User --> Role
+
+SubmissionEvent --> Category
+
+Article "1" o-- "0..*" Review
+Article "0..*" -- "1..*" Area
+Article o-- ArticleState
+
+ReviewerProfile "1" --> "1" User
+ReviewerProfile "0..*" -- "1..*" Area
+
+ReviewerInvitation "1" --> "1" User
+
+Review "1" --> "1" ReviewerProfile
+Review "1" --> "1" Article
+Review --> Verdict
+Review --> ReviewStatus
+
+ArticleState <|.. SubmittedState
+ArticleState <|.. UnderReviewState
+ArticleState <|.. AttentionState
+ArticleState <|.. AcceptedState
+ArticleState <|.. RejectedState
+
+note right of ArticleForReviewDTO
+  DTO usado para blind review.
+  Não expõe autores ao revisor.
+end note
+
+note bottom of Area
+  Area não guarda referência para SubmissionEvent,
+  porque o sistema trabalha apenas com o evento atual.
+end note
+
+@enduml

@@ -1,0 +1,215 @@
+@startuml PatternsDiagram
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+title Padrões de Projeto - Sistema de Submissão e Avaliação
+
+' Referências externas do domínio
+class Article <<domain>>
+class Review <<domain>>
+class ReviewerProfile <<domain>>
+class Area <<domain>>
+class ReviewOutcome <<enum>>
+
+package "Strategy + Abstract Factory - Workflow de Revisão" as WorkflowPkg {
+
+  interface DistributionStrategy <<Strategy>> {
+    + distribute(articles: List<Article>, reviewers: List<ReviewerProfile>): List<Review>
+  }
+
+  abstract class CompatibleBalancedDistributionStrategy {
+    - compatibilityStrategy: CompatibilityStrategy
+    # reviewersPerArticle(): int
+    + distribute(articles: List<Article>, reviewers: List<ReviewerProfile>): List<Review>
+    - selectReviewers(article: Article, reviewers: List<ReviewerProfile>): List<ReviewerProfile>
+  }
+
+  class OneReviewerDistributionStrategy
+  class TwoReviewerDistributionStrategy
+  class ThreeReviewerDistributionStrategy
+
+  interface CompatibilityStrategy <<Strategy>> {
+    + calculateScore(article: Article, reviewer: ReviewerProfile): int
+  }
+
+  class AreaCompatibilityStrategy {
+    + calculateScore(article: Article, reviewer: ReviewerProfile): int
+  }
+
+  interface ReviewPolicy <<Strategy>> {
+    + reviewersPerArticle(): int
+    + isComplete(reviews: List<Review>): boolean
+    + conclude(reviews: List<Review>): ReviewOutcome
+  }
+
+  class OneReviewerPolicy
+  class TwoReviewerPolicy
+  class ThreeReviewerPolicy
+
+  interface ReviewWorkflowFactory <<Abstract Factory>> {
+    + createDistributionStrategy(): DistributionStrategy
+    + createReviewPolicy(): ReviewPolicy
+  }
+
+  class OneReviewerWorkflowFactory
+  class TwoReviewerWorkflowFactory
+  class ThreeReviewerWorkflowFactory
+
+  class ReviewWorkflowContext {
+    - distributionStrategy: DistributionStrategy
+    - reviewPolicy: ReviewPolicy
+    + configure(factory: ReviewWorkflowFactory): void
+    + getDistributionStrategy(): DistributionStrategy
+    + getReviewPolicy(): ReviewPolicy
+  }
+
+  class ReviewWorkflowFactoryProvider {
+    + getFactory(reviewersPerArticle: int): ReviewWorkflowFactory
+  }
+}
+
+DistributionStrategy <|.. CompatibleBalancedDistributionStrategy
+CompatibleBalancedDistributionStrategy <|-- OneReviewerDistributionStrategy
+CompatibleBalancedDistributionStrategy <|-- TwoReviewerDistributionStrategy
+CompatibleBalancedDistributionStrategy <|-- ThreeReviewerDistributionStrategy
+
+CompatibleBalancedDistributionStrategy --> CompatibilityStrategy
+CompatibilityStrategy <|.. AreaCompatibilityStrategy
+
+ReviewPolicy <|.. OneReviewerPolicy
+ReviewPolicy <|.. TwoReviewerPolicy
+ReviewPolicy <|.. ThreeReviewerPolicy
+
+ReviewWorkflowFactory <|.. OneReviewerWorkflowFactory
+ReviewWorkflowFactory <|.. TwoReviewerWorkflowFactory
+ReviewWorkflowFactory <|.. ThreeReviewerWorkflowFactory
+
+OneReviewerWorkflowFactory ..> OneReviewerDistributionStrategy : cria
+OneReviewerWorkflowFactory ..> OneReviewerPolicy : cria
+
+TwoReviewerWorkflowFactory ..> TwoReviewerDistributionStrategy : cria
+TwoReviewerWorkflowFactory ..> TwoReviewerPolicy : cria
+
+ThreeReviewerWorkflowFactory ..> ThreeReviewerDistributionStrategy : cria
+ThreeReviewerWorkflowFactory ..> ThreeReviewerPolicy : cria
+
+ReviewWorkflowContext o-- DistributionStrategy
+ReviewWorkflowContext o-- ReviewPolicy
+ReviewWorkflowContext --> ReviewWorkflowFactory : configura usando
+ReviewWorkflowFactoryProvider ..> ReviewWorkflowFactory
+
+
+package "Observer - Eventos de Domínio" as ObserverPkg {
+
+  interface DomainEvent
+
+  interface "Subscriber<T extends DomainEvent>" as Subscriber <<Observer>> {
+    + update(event: T): void
+  }
+
+  class EventPublisher <<Subject>> {
+    - subscribers: Map<Class<?>, List<Subscriber<?>>>
+    + subscribe(eventType: Class<T>, subscriber: Subscriber<T>): void
+    + unsubscribe(eventType: Class<T>, subscriber: Subscriber<T>): void
+    + publish(event: DomainEvent): void
+  }
+
+  class ArticleAssignedEvent {
+    - review: Review
+  }
+
+  class ArticleConcludedEvent {
+    - article: Article
+    - outcome: ReviewOutcome
+  }
+
+  class ReviewAttentionEvent {
+    - article: Article
+    - reviews: List<Review>
+  }
+
+  class ReviewerAssignmentEmailSubscriber {
+    - emailSender: EmailSender
+    + update(event: ArticleAssignedEvent): void
+  }
+
+  class AuthorResultEmailSubscriber {
+    - emailSender: EmailSender
+    + update(event: ArticleConcludedEvent): void
+  }
+
+  class ReviewAttentionEmailSubscriber {
+    - emailSender: EmailSender
+    + update(event: ReviewAttentionEvent): void
+  }
+}
+
+DomainEvent <|.. ArticleAssignedEvent
+DomainEvent <|.. ArticleConcludedEvent
+DomainEvent <|.. ReviewAttentionEvent
+
+EventPublisher o-- Subscriber
+EventPublisher ..> DomainEvent : publica
+
+Subscriber <|.. ReviewerAssignmentEmailSubscriber
+Subscriber <|.. AuthorResultEmailSubscriber
+Subscriber <|.. ReviewAttentionEmailSubscriber
+
+ArticleAssignedEvent --> Review
+ArticleConcludedEvent --> Article
+ReviewAttentionEvent --> Article
+ReviewAttentionEvent --> Review
+
+
+package "Adapter - Envio de Email" as EmailPkg {
+
+  class EmailMessage {
+    - to: String
+    - subject: String
+    - body: String
+  }
+
+  interface EmailSender <<Target>> {
+    + send(message: EmailMessage): void
+  }
+
+  class SmtpEmailSenderAdapter <<Adapter>> {
+    - smtpClient: SmtpClient
+    + send(message: EmailMessage): void
+  }
+
+  class FakeEmailSenderAdapter <<Adapter>> {
+    + send(message: EmailMessage): void
+  }
+
+  class SmtpClient <<Adaptee>> {
+    + sendEmail(to: String, subject: String, body: String): void
+  }
+}
+
+EmailSender <|.. SmtpEmailSenderAdapter
+EmailSender <|.. FakeEmailSenderAdapter
+SmtpEmailSenderAdapter --> SmtpClient
+EmailSender --> EmailMessage
+
+ReviewerAssignmentEmailSubscriber --> EmailSender
+AuthorResultEmailSubscriber --> EmailSender
+ReviewAttentionEmailSubscriber --> EmailSender
+
+
+note as N1
+  Abstract Factory cria pares compatíveis:
+  - DistributionStrategy
+  - ReviewPolicy
+
+  Isso evita combinar, por exemplo,
+  distribuição para 3 revisores com política
+  de conclusão para 2 pareceres.
+end note
+
+N1 .. WorkflowPkg
+
+@enduml

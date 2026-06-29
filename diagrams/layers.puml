@@ -1,0 +1,494 @@
+@startuml LayersDiagram
+
+' skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+title Camadas - Apresentação, Services e Repositórios
+
+' Referências externas do domínio/padrões
+class User <<domain>>
+class SubmissionEvent <<domain>>
+class Area <<domain>>
+class Article <<domain>>
+class Review <<domain>>
+class ReviewerProfile <<domain>>
+class ReviewerInvitation <<domain>>
+class ArticleForReviewDTO <<dto>>
+class ReviewOutcome <<enum>>
+class Role <<enum>>
+class Verdict <<enum>>
+
+class ReviewWorkflowContext <<patterns>>
+class ReviewWorkflowFactoryProvider <<patterns>>
+class EventPublisher <<patterns>>
+
+package "Repositórios" as RepoPkg {
+
+  interface "Repository<T, ID>" as Repository {
+    + findAll(): List<T>
+    + findById(id: ID): Optional<T>
+    + save(object: T): T
+    + delete(id: ID): void
+  }
+
+  interface ResettableRepository {
+    + deleteAll(): void
+  }
+
+  interface UserRepository {
+    + findByEmail(email: String): Optional<User>
+  }
+
+  interface SubmissionEventRepository {
+    + saveCurrent(event: SubmissionEvent): void
+    + findCurrent(): Optional<SubmissionEvent>
+  }
+
+  interface AreaRepository {
+    + findByName(name: String): Optional<Area>
+  }
+
+  interface ArticleRepository {
+    + findByAuthor(author: User): List<Article>
+    + findPending(): List<Article>
+    + findFinished(): List<Article>
+  }
+
+  interface ReviewRepository {
+    + findByArticle(article: Article): List<Review>
+    + findByReviewer(reviewer: ReviewerProfile): List<Review>
+    + saveAll(reviews: List<Review>): void
+  }
+
+  interface ReviewerRepository {
+    + findByUser(user: User): Optional<ReviewerProfile>
+  }
+
+  interface ReviewerInvitationRepository {
+    + findPendingByUser(user: User): List<ReviewerInvitation>
+  }
+
+  class InMemoryUserRepository {
+    - users: List<User>
+    - nextId: int
+  }
+
+  class InMemorySubmissionEventRepository {
+    - currentEvent: SubmissionEvent
+  }
+
+  class InMemoryAreaRepository {
+    - areas: List<Area>
+    - nextId: int
+  }
+
+  class InMemoryArticleRepository {
+    - articles: List<Article>
+    - nextId: int
+  }
+
+  class InMemoryReviewRepository {
+    - reviews: List<Review>
+    - nextId: int
+  }
+
+  class InMemoryReviewerRepository {
+    - reviewers: List<ReviewerProfile>
+    - nextId: int
+  }
+
+  class InMemoryReviewerInvitationRepository {
+    - invitations: List<ReviewerInvitation>
+    - nextId: int
+  }
+}
+
+Repository <|-- UserRepository
+Repository <|-- AreaRepository
+Repository <|-- ArticleRepository
+Repository <|-- ReviewRepository
+Repository <|-- ReviewerRepository
+Repository <|-- ReviewerInvitationRepository
+
+ResettableRepository <|-- AreaRepository
+ResettableRepository <|-- ArticleRepository
+ResettableRepository <|-- ReviewRepository
+ResettableRepository <|-- ReviewerRepository
+ResettableRepository <|-- ReviewerInvitationRepository
+
+UserRepository <|.. InMemoryUserRepository
+SubmissionEventRepository <|.. InMemorySubmissionEventRepository
+AreaRepository <|.. InMemoryAreaRepository
+ArticleRepository <|.. InMemoryArticleRepository
+ReviewRepository <|.. InMemoryReviewRepository
+ReviewerRepository <|.. InMemoryReviewerRepository
+ReviewerInvitationRepository <|.. InMemoryReviewerInvitationRepository
+
+InMemoryUserRepository o-- User
+InMemorySubmissionEventRepository o-- SubmissionEvent
+InMemoryAreaRepository o-- Area
+InMemoryArticleRepository o-- Article
+InMemoryReviewRepository o-- Review
+InMemoryReviewerRepository o-- ReviewerProfile
+InMemoryReviewerInvitationRepository o-- ReviewerInvitation
+
+
+package "Services" as ServicePkg {
+
+  class AuthService {
+    - userRepository: UserRepository
+    - currentUser: User
+    + authenticate(email: String, password: String): User
+    + logout(): void
+    + getCurrentUser(): User
+    + currentUserHasRole(role: Role): boolean
+  }
+
+  class SubmissionEventService {
+    - eventRepository: SubmissionEventRepository
+    - eventScopedRepositories: List<ResettableRepository>
+    - workflowContext: ReviewWorkflowContext
+    - factoryProvider: ReviewWorkflowFactoryProvider
+    + startEvent(data: StartEventData): SubmissionEvent
+    + getCurrentEvent(): SubmissionEvent
+  }
+
+  class AreaService {
+    - areaRepository: AreaRepository
+    + registerArea(name: String): Area
+    + listAreas(): List<Area>
+  }
+
+  class ReviewerService {
+    - userRepository: UserRepository
+    - reviewerRepository: ReviewerRepository
+    - invitationRepository: ReviewerInvitationRepository
+    + inviteResearcher(userId: Integer): ReviewerInvitation
+    + acceptInvitation(invitationId: Integer, areas: List<Area>): ReviewerProfile
+    + listReviewers(): List<ReviewerProfile>
+  }
+
+  class ArticleService {
+    - articleRepository: ArticleRepository
+    - eventService: SubmissionEventService
+    - authService: AuthService
+    + submitArticle(data: SubmitArticleData): Article
+    + listMyArticles(): List<Article>
+    + listArticlesForReview(reviewer: ReviewerProfile): List<ArticleForReviewDTO>
+  }
+
+  class DistributionService {
+    - articleRepository: ArticleRepository
+    - reviewerRepository: ReviewerRepository
+    - reviewRepository: ReviewRepository
+    - workflowContext: ReviewWorkflowContext
+    - eventPublisher: EventPublisher
+    + distributeArticles(): void
+  }
+
+  class ReviewService {
+    - reviewRepository: ReviewRepository
+    - articleRepository: ArticleRepository
+    - workflowContext: ReviewWorkflowContext
+    - eventPublisher: EventPublisher
+    + submitReview(reviewId: Integer, data: ReviewData): void
+    + listAssignedReviews(reviewer: ReviewerProfile): List<Review>
+  }
+
+  class DashboardService {
+    - articleRepository: ArticleRepository
+    - reviewRepository: ReviewRepository
+    - reviewerRepository: ReviewerRepository
+    + getDashboard(): CoordinatorDashboard
+  }
+
+  class UserService {
+    - userRepository: UserRepository
+    + registerResearcher(data: RegisterUserData): User
+  }
+
+  class DataSeeder {
+    - userRepository: UserRepository
+    - eventService: SubmissionEventService
+    - areaService: AreaService
+    + seedInitialData(): void
+  }
+
+  class StartEventData {
+    + name: String
+    + city: String
+    + submissionDeadline: LocalDate
+    + startDate: LocalDate
+    + endDate: LocalDate
+    + category: String
+    + reviewersPerArticle: int
+  }
+
+  class SubmitArticleData {
+    + title: String
+    + abstractText: String
+    + coauthorIds: List<Integer>
+    + areaIds: List<Integer>
+  }
+
+  class ReviewData {
+    + contribution: String
+    + criticism: String
+    + verdict: Verdict
+  }
+
+  class RegisterUserData {
+    + email: String
+    + password: String
+    + institution: String
+  }
+
+  class CoordinatorDashboard {
+    + submittedArticles: int
+    + reviewers: int
+    + evaluatedArticles: int
+    + pendingArticles: int
+    + pendingDetails: List<PendingArticleInfo>
+  }
+
+  class PendingArticleInfo {
+    + articleTitle: String
+    + reviewerEmail: String
+    + dueDate: LocalDate
+  }
+}
+
+AuthService --> UserRepository
+
+SubmissionEventService --> SubmissionEventRepository
+SubmissionEventService --> ResettableRepository : limpa dados do evento anterior
+SubmissionEventService --> ReviewWorkflowContext : configura workflow
+SubmissionEventService --> ReviewWorkflowFactoryProvider
+
+AreaService --> AreaRepository
+
+ReviewerService --> UserRepository
+ReviewerService --> ReviewerRepository
+ReviewerService --> ReviewerInvitationRepository
+
+ArticleService --> ArticleRepository
+ArticleService --> SubmissionEventService
+ArticleService --> AuthService
+
+DistributionService --> ArticleRepository
+DistributionService --> ReviewerRepository
+DistributionService --> ReviewRepository
+DistributionService --> ReviewWorkflowContext
+DistributionService --> EventPublisher
+
+ReviewService --> ReviewRepository
+ReviewService --> ArticleRepository
+ReviewService --> ReviewWorkflowContext
+ReviewService --> EventPublisher
+
+DashboardService --> ArticleRepository
+DashboardService --> ReviewRepository
+DashboardService --> ReviewerRepository
+
+UserService --> UserRepository
+
+DataSeeder --> UserRepository
+DataSeeder --> SubmissionEventService
+DataSeeder --> AreaService
+
+
+package "Facades e Proxy" as FacadePkg {
+
+  interface CoordinatorActions {
+    + startEvent(data: StartEventData): SubmissionEvent
+    + registerArea(name: String): Area
+    + inviteReviewer(userId: Integer): ReviewerInvitation
+    + distributeArticles(): void
+    + getDashboard(): CoordinatorDashboard
+  }
+
+  class CoordinatorFacade <<Facade>> {
+    - eventService: SubmissionEventService
+    - areaService: AreaService
+    - reviewerService: ReviewerService
+    - distributionService: DistributionService
+    - dashboardService: DashboardService
+    + startEvent(data: StartEventData): SubmissionEvent
+    + registerArea(name: String): Area
+    + inviteReviewer(userId: Integer): ReviewerInvitation
+    + distributeArticles(): void
+    + getDashboard(): CoordinatorDashboard
+  }
+
+  class CoordinatorAuthorizationProxy <<Proxy>> {
+    - target: CoordinatorActions
+    - authService: AuthService
+    + startEvent(data: StartEventData): SubmissionEvent
+    + registerArea(name: String): Area
+    + inviteReviewer(userId: Integer): ReviewerInvitation
+    + distributeArticles(): void
+    + getDashboard(): CoordinatorDashboard
+    - requireCoordinator(): void
+  }
+
+  interface AuthorActions {
+    + submitArticle(data: SubmitArticleData): Article
+    + listMyArticles(): List<Article>
+  }
+
+  class AuthorFacade <<Facade>> {
+    - articleService: ArticleService
+    + submitArticle(data: SubmitArticleData): Article
+    + listMyArticles(): List<Article>
+  }
+
+  interface ReviewerActions {
+    + listAssignedArticles(): List<ArticleForReviewDTO>
+    + submitReview(reviewId: Integer, data: ReviewData): void
+    + acceptInvitation(invitationId: Integer, areas: List<Area>): ReviewerProfile
+  }
+
+  class ReviewerFacade <<Facade>> {
+    - reviewService: ReviewService
+    - reviewerService: ReviewerService
+    - articleService: ArticleService
+    - authService: AuthService
+    + listAssignedArticles(): List<ArticleForReviewDTO>
+    + submitReview(reviewId: Integer, data: ReviewData): void
+    + acceptInvitation(invitationId: Integer, areas: List<Area>): ReviewerProfile
+  }
+}
+
+CoordinatorActions <|.. CoordinatorFacade
+CoordinatorActions <|.. CoordinatorAuthorizationProxy
+CoordinatorAuthorizationProxy o-- CoordinatorActions : target
+CoordinatorAuthorizationProxy --> AuthService
+
+CoordinatorFacade --> SubmissionEventService
+CoordinatorFacade --> AreaService
+CoordinatorFacade --> ReviewerService
+CoordinatorFacade --> DistributionService
+CoordinatorFacade --> DashboardService
+
+AuthorActions <|.. AuthorFacade
+AuthorFacade --> ArticleService
+
+ReviewerActions <|.. ReviewerFacade
+ReviewerFacade --> ReviewService
+ReviewerFacade --> ReviewerService
+ReviewerFacade --> ArticleService
+ReviewerFacade --> AuthService
+
+
+package "Apresentação e Commands" as PresentationPkg {
+
+  interface Command <<Command>> {
+    + execute(): void
+  }
+
+  class StartEventCommand {
+    - coordinatorActions: CoordinatorActions
+    - inputReader: InputReader
+    + execute(): void
+  }
+
+  class RegisterAreaCommand {
+    - coordinatorActions: CoordinatorActions
+    - inputReader: InputReader
+    + execute(): void
+  }
+
+  class InviteReviewerCommand {
+    - coordinatorActions: CoordinatorActions
+    - inputReader: InputReader
+    + execute(): void
+  }
+
+  class AcceptReviewerInvitationCommand {
+    - reviewerActions: ReviewerActions
+    - inputReader: InputReader
+    + execute(): void
+  }
+
+  class SubmitArticleCommand {
+    - authorActions: AuthorActions
+    - inputReader: InputReader
+    + execute(): void
+  }
+
+  class ReviewArticleCommand {
+    - reviewerActions: ReviewerActions
+    - inputReader: InputReader
+    + execute(): void
+  }
+
+  class DistributeArticlesCommand {
+    - coordinatorActions: CoordinatorActions
+    + execute(): void
+  }
+
+  class MainMenu {
+    - commands: Map<Integer, Command>
+    - authService: AuthService
+    + start(): void
+    + showOptions(): void
+  }
+
+  class InputReader {
+    + readStartEventData(): StartEventData
+    + readSubmitArticleData(): SubmitArticleData
+    + readReviewData(): ReviewData
+    + readAreaSelection(): List<Area>
+  }
+
+  class ConsoleView {
+    + showMessage(message: String): void
+    + showError(error: Exception): void
+    + showDashboard(dashboard: CoordinatorDashboard): void
+  }
+}
+
+Command <|.. StartEventCommand
+Command <|.. RegisterAreaCommand
+Command <|.. InviteReviewerCommand
+Command <|.. AcceptReviewerInvitationCommand
+Command <|.. SubmitArticleCommand
+Command <|.. ReviewArticleCommand
+Command <|.. DistributeArticlesCommand
+
+StartEventCommand --> CoordinatorActions
+RegisterAreaCommand --> CoordinatorActions
+InviteReviewerCommand --> CoordinatorActions
+DistributeArticlesCommand --> CoordinatorActions
+
+AcceptReviewerInvitationCommand --> ReviewerActions
+ReviewArticleCommand --> ReviewerActions
+
+SubmitArticleCommand --> AuthorActions
+
+StartEventCommand --> InputReader
+RegisterAreaCommand --> InputReader
+InviteReviewerCommand --> InputReader
+AcceptReviewerInvitationCommand --> InputReader
+SubmitArticleCommand --> InputReader
+ReviewArticleCommand --> InputReader
+
+MainMenu o-- Command
+MainMenu --> AuthService
+MainMenu --> ConsoleView
+
+
+note as N1
+  Persistência:
+  - Não há banco de dados.
+  - Cada InMemoryRepository guarda seus dados em atributos.
+  - UserRepository não é limpo ao iniciar novo evento.
+  - Repositórios do evento atual implementam ResettableRepository.
+  - SubmissionEventService centraliza o descarte dos dados anteriores.
+end note
+
+N1 .. RepoPkg
+
+@enduml

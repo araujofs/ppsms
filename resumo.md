@@ -40,7 +40,7 @@
 
 ## Fluxo do pesquisador/autor
 
-- Cadastrar usuários  (pesquisador) com email, senha e instituição
+- Cadastrar usuários (pesquisador) com email, senha e instituição
 - Submeter artigo com nome, resumo, coautores e áreas temáticas apenas se estiver no período de submissão, caso contrário mostrar mensagem
 - Visualizar artigos submetidos pelo autor logado no momento com status:
   - pendente (deriva dos mais específicos)
@@ -101,7 +101,12 @@
 
 ## RF10 / Extra
 
-- Extra ???
+- O coordenador deve poder escolher a quantidade de revisores por artigo no evento dentre as seguintes opções:
+  - 1
+  - 2
+  - 3
+
+- Essa escolha deve causar a criação de estratégias de distribuição e revisão compatíveis com a quantidade de revisores escolhida
 
 ## Padrões que provavelmente serão usados em algum lugar
 
@@ -124,6 +129,12 @@
     - reviewer
     - researcher
     - coordinator
+
+- Strategy
+  - distribuição de artigos para review
+
+- Abstract Factory
+  - criação da estratégia de distribuição e criação da política de review de maneira compatível
 
 - Observer
   - notificar revisores sobre recebimento de artigos para revisão
@@ -148,13 +159,13 @@
 
 - As informações serão guardadas em memória, não vai haver banco de fato
   - na verdade nem mesmo o processo de seed vai ser a partir de um csv ou coisa assim, vamos utilizar um seed a partir de uma classe que vai rodar:
-    - ou a partir de uma  escolha do usuário  de popular a partir do menu, onde ele criaria apenas o evento na mão
+    - ou a partir de uma escolha do usuário de popular a partir do menu, onde ele criaria apenas o evento na mão
     - ou colocar quando inicializar o app
 
 - Usar interfaces de repositórios evitando acoplamento
 
 - Os repositórios concretos devem armazenar em atributos as informações
-    - os usuários cadastrados ficam como uma lista em UserRepo etc
+  - os usuários cadastrados ficam como uma lista em UserRepo etc
 
 - Usar a lógica de que o único evento é o atual, ou seja, não tem pra que guardar referência a evento nas classes que tem relacionamento com ele, existe apenas um evento
 

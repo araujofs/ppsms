@@ -14,12 +14,6 @@
     DEMO
   }
 
-  enum Role {
-    RES
-    REV
-    CRD
-  }
-
   class Area {
     - title: String
     - event: SubmissionEvent
@@ -45,26 +39,28 @@
     - email: String
     - password: String
     - institution: String
-    - areas: List<Area>
-    - roles: List<Role>
-    - reviews: List<Review>
     - articles: List<Article>
   }
 
-  User o-- Area
-  User o-- Role
+  class Reviewer {
+    - user: User
+    - reviews: List<Review>
+    - areas: List<Area>
+  }
+
+  Reviewer o-- Area
+  Reviewer o-- User
 
   class Review {
-    - id: Integer
     - contributions: String
     - critiques: String
     - verdict: Verdict
     - article: Article
-    - reviewer: User
+    - reviewer: Reviewer
   }
 
   Review o-- Verdict
-  Review o-- User : reviewer
+  Review o-- Reviewer : reviewer
 
   package State {
     class Article {

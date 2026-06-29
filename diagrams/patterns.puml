@@ -7,12 +7,19 @@ skinparam linetype ortho
 
 title Padrões de Projeto - Sistema de Submissão e Avaliação
 
-' Referências externas do domínio
+' ============================================================
+' REFERÊNCIAS EXTERNAS DO DOMÍNIO
+' ============================================================
+
 class Article <<domain>>
 class Review <<domain>>
 class ReviewerProfile <<domain>>
-class Area <<domain>>
 class ReviewOutcome <<enum>>
+
+
+' ============================================================
+' STRATEGY + ABSTRACT FACTORY
+' ============================================================
 
 package "Strategy + Abstract Factory - Workflow de Revisão" as WorkflowPkg {
 
@@ -20,23 +27,24 @@ package "Strategy + Abstract Factory - Workflow de Revisão" as WorkflowPkg {
     + distribute(articles: List<Article>, reviewers: List<ReviewerProfile>): List<Review>
   }
 
-  abstract class CompatibleBalancedDistributionStrategy {
-    - compatibilityStrategy: CompatibilityStrategy
+  abstract class BalancedDistributionStrategy {
     # reviewersPerArticle(): int
     + distribute(articles: List<Article>, reviewers: List<ReviewerProfile>): List<Review>
     - selectReviewers(article: Article, reviewers: List<ReviewerProfile>): List<ReviewerProfile>
+    - calculateCompatibility(article: Article, reviewer: ReviewerProfile): int
+    - calculateReviewerLoad(reviewer: ReviewerProfile): int
   }
 
-  class OneReviewerDistributionStrategy
-  class TwoReviewerDistributionStrategy
-  class ThreeReviewerDistributionStrategy
-
-  interface CompatibilityStrategy <<Strategy>> {
-    + calculateScore(article: Article, reviewer: ReviewerProfile): int
+  class OneReviewerDistributionStrategy {
+    # reviewersPerArticle(): int
   }
 
-  class AreaCompatibilityStrategy {
-    + calculateScore(article: Article, reviewer: ReviewerProfile): int
+  class TwoReviewerDistributionStrategy {
+    # reviewersPerArticle(): int
+  }
+
+  class ThreeReviewerDistributionStrategy {
+    # reviewersPerArticle(): int
   }
 
   interface ReviewPolicy <<Strategy>> {
@@ -45,18 +53,43 @@ package "Strategy + Abstract Factory - Workflow de Revisão" as WorkflowPkg {
     + conclude(reviews: List<Review>): ReviewOutcome
   }
 
-  class OneReviewerPolicy
-  class TwoReviewerPolicy
-  class ThreeReviewerPolicy
+  class OneReviewerPolicy {
+    + reviewersPerArticle(): int
+    + isComplete(reviews: List<Review>): boolean
+    + conclude(reviews: List<Review>): ReviewOutcome
+  }
+
+  class TwoReviewerPolicy {
+    + reviewersPerArticle(): int
+    + isComplete(reviews: List<Review>): boolean
+    + conclude(reviews: List<Review>): ReviewOutcome
+  }
+
+  class ThreeReviewerPolicy {
+    + reviewersPerArticle(): int
+    + isComplete(reviews: List<Review>): boolean
+    + conclude(reviews: List<Review>): ReviewOutcome
+  }
 
   interface ReviewWorkflowFactory <<Abstract Factory>> {
     + createDistributionStrategy(): DistributionStrategy
     + createReviewPolicy(): ReviewPolicy
   }
 
-  class OneReviewerWorkflowFactory
-  class TwoReviewerWorkflowFactory
-  class ThreeReviewerWorkflowFactory
+  class OneReviewerWorkflowFactory {
+    + createDistributionStrategy(): DistributionStrategy
+    + createReviewPolicy(): ReviewPolicy
+  }
+
+  class TwoReviewerWorkflowFactory {
+    + createDistributionStrategy(): DistributionStrategy
+    + createReviewPolicy(): ReviewPolicy
+  }
+
+  class ThreeReviewerWorkflowFactory {
+    + createDistributionStrategy(): DistributionStrategy
+    + createReviewPolicy(): ReviewPolicy
+  }
 
   class ReviewWorkflowContext {
     - distributionStrategy: DistributionStrategy
@@ -65,23 +98,24 @@ package "Strategy + Abstract Factory - Workflow de Revisão" as WorkflowPkg {
     + getDistributionStrategy(): DistributionStrategy
     + getReviewPolicy(): ReviewPolicy
   }
-
-  class ReviewWorkflowFactoryProvider {
-    + getFactory(reviewersPerArticle: int): ReviewWorkflowFactory
-  }
 }
 
-DistributionStrategy <|.. CompatibleBalancedDistributionStrategy
-CompatibleBalancedDistributionStrategy <|-- OneReviewerDistributionStrategy
-CompatibleBalancedDistributionStrategy <|-- TwoReviewerDistributionStrategy
-CompatibleBalancedDistributionStrategy <|-- ThreeReviewerDistributionStrategy
+DistributionStrategy <|.. BalancedDistributionStrategy
 
-CompatibleBalancedDistributionStrategy --> CompatibilityStrategy
-CompatibilityStrategy <|.. AreaCompatibilityStrategy
+BalancedDistributionStrategy <|-- OneReviewerDistributionStrategy
+BalancedDistributionStrategy <|-- TwoReviewerDistributionStrategy
+BalancedDistributionStrategy <|-- ThreeReviewerDistributionStrategy
+
+DistributionStrategy ..> Article : usa
+DistributionStrategy ..> ReviewerProfile : seleciona
+DistributionStrategy ..> Review : cria/retorna
 
 ReviewPolicy <|.. OneReviewerPolicy
 ReviewPolicy <|.. TwoReviewerPolicy
 ReviewPolicy <|.. ThreeReviewerPolicy
+
+ReviewPolicy ..> Review : analisa
+ReviewPolicy ..> ReviewOutcome : retorna
 
 ReviewWorkflowFactory <|.. OneReviewerWorkflowFactory
 ReviewWorkflowFactory <|.. TwoReviewerWorkflowFactory
@@ -99,8 +133,11 @@ ThreeReviewerWorkflowFactory ..> ThreeReviewerPolicy : cria
 ReviewWorkflowContext o-- DistributionStrategy
 ReviewWorkflowContext o-- ReviewPolicy
 ReviewWorkflowContext --> ReviewWorkflowFactory : configura usando
-ReviewWorkflowFactoryProvider ..> ReviewWorkflowFactory
 
+
+' ============================================================
+' OBSERVER
+' ============================================================
 
 package "Observer - Eventos de Domínio" as ObserverPkg {
 
@@ -160,16 +197,21 @@ Subscriber <|.. ReviewAttentionEmailSubscriber
 
 ArticleAssignedEvent --> Review
 ArticleConcludedEvent --> Article
+ArticleConcludedEvent --> ReviewOutcome
 ReviewAttentionEvent --> Article
 ReviewAttentionEvent --> Review
 
 
+' ============================================================
+' ADAPTER
+' ============================================================
+
 package "Adapter - Envio de Email" as EmailPkg {
 
-  class EmailMessage {
-    - to: String
-    - subject: String
-    - body: String
+  record EmailMessage {
+    + to: String
+    + subject: String
+    + body: String
   }
 
   interface EmailSender <<Target>> {
@@ -192,6 +234,7 @@ package "Adapter - Envio de Email" as EmailPkg {
 
 EmailSender <|.. SmtpEmailSenderAdapter
 EmailSender <|.. FakeEmailSenderAdapter
+
 SmtpEmailSenderAdapter --> SmtpClient
 EmailSender --> EmailMessage
 
@@ -200,16 +243,44 @@ AuthorResultEmailSubscriber --> EmailSender
 ReviewAttentionEmailSubscriber --> EmailSender
 
 
-note as N1
-  Abstract Factory cria pares compatíveis:
-  - DistributionStrategy
-  - ReviewPolicy
+' ============================================================
+' NOTAS
+' ============================================================
 
-  Isso evita combinar, por exemplo,
-  distribuição para 3 revisores com política
-  de conclusão para 2 pareceres.
+note right of WorkflowPkg
+  Strategy:
+  - DistributionStrategy decide como distribuir artigos.
+  - ReviewPolicy decide quando a revisão está completa
+    e qual é o resultado final.
+
+  Abstract Factory:
+  - Garante que a estratégia de distribuição e a política
+    de conclusão sejam compatíveis com a quantidade de
+    revisores por artigo.
 end note
 
-N1 .. WorkflowPkg
+note bottom of BalancedDistributionStrategy
+  A compatibilidade por área é cálculo interno
+  da distribuição balanceada.
+
+  Não há CompatibilityStrategy separada,
+  para reduzir classes sem perder a regra.
+end note
+
+note right of ObserverPkg
+  Observer desacopla regras principais
+  das notificações.
+
+  Ao distribuir ou concluir uma revisão,
+  o serviço publica eventos; os subscribers
+  cuidam dos e-mails.
+end note
+
+note bottom of EmailPkg
+  Adapter isola o mecanismo real de envio de e-mail.
+
+  O sistema depende de EmailSender,
+  não diretamente de SMTP ou biblioteca externa.
+end note
 
 @enduml

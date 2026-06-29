@@ -1,18 +1,22 @@
 @startuml DomainDiagram
 
-' skinparam classAttributeIconSize r
+skinparam classAttributeIconSize 0
 skinparam shadowing false
 skinparam packageStyle rectangle
 skinparam linetype ortho
 
 title Domínio - Sistema de Submissão e Avaliação de Artigos
 
-package "Domínio" as Domain {
+' ============================================================
+' DOMÍNIO PRINCIPAL
+' ============================================================
+
+package "Domínio" as DomainPkg {
 
   class User {
     - id: Integer
     - email: String
-    - passwordHash: String
+    - password: String
     - institution: String
     - roles: List<Role>
     + hasRole(role: Role): boolean
@@ -51,14 +55,9 @@ package "Domínio" as Domain {
     - id: Integer
     - researcher: User
     - expertiseAreas: List<Area>
+    + setExpertiseAreas(areas: List<Area>): void
     + hasExpertiseIn(area: Area): boolean
-  }
-
-  class ReviewerInvitation {
-    - id: Integer
-    - researcher: User
-    - accepted: boolean
-    + accept(areas: List<Area>): ReviewerProfile
+    + hasDefinedExpertiseAreas(): boolean
   }
 
   class Article {
@@ -109,14 +108,12 @@ package "Domínio" as Domain {
     ATTENTION
     INCOMPLETE
   }
-
-  class ArticleForReviewDTO {
-    - id: Integer
-    - title: String
-    - abstractText: String
-    - areas: List<String>
-  }
 }
+
+
+' ============================================================
+' STATE
+' ============================================================
 
 package "State - Estado do Artigo" as StatePkg {
 
@@ -130,30 +127,140 @@ package "State - Estado do Artigo" as StatePkg {
     + getName(): String
   }
 
-  class SubmittedState
-  class UnderReviewState
-  class AttentionState
-  class AcceptedState
-  class RejectedState
+  class SubmittedState {
+    + startReview(article: Article): void
+    + accept(article: Article): void
+    + reject(article: Article): void
+    + markAttention(article: Article): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + getName(): String
+  }
+
+  class UnderReviewState {
+    + startReview(article: Article): void
+    + accept(article: Article): void
+    + reject(article: Article): void
+    + markAttention(article: Article): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + getName(): String
+  }
+
+  class AttentionState {
+    + startReview(article: Article): void
+    + accept(article: Article): void
+    + reject(article: Article): void
+    + markAttention(article: Article): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + getName(): String
+  }
+
+  class AcceptedState {
+    + startReview(article: Article): void
+    + accept(article: Article): void
+    + reject(article: Article): void
+    + markAttention(article: Article): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + getName(): String
+  }
+
+  class RejectedState {
+    + startReview(article: Article): void
+    + accept(article: Article): void
+    + reject(article: Article): void
+    + markAttention(article: Article): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + getName(): String
+  }
 }
+
+
+' ============================================================
+' DADOS / RECORDS
+' ============================================================
+
+package "Dados / Records" as DataPkg {
+
+  record RegisterUserData {
+    + email: String
+    + password: String
+    + institution: String
+  }
+
+  record StartEventData {
+    + name: String
+    + city: String
+    + submissionDeadline: LocalDate
+    + startDate: LocalDate
+    + endDate: LocalDate
+    + category: Category
+    + reviewersPerArticle: int
+  }
+
+  record SubmitArticleData {
+    + title: String
+    + abstractText: String
+    + coauthorIds: List<Integer>
+    + areaIds: List<Integer>
+  }
+
+  record DefineReviewerAreasData {
+    + areaIds: List<Integer>
+  }
+
+  record ReviewData {
+    + reviewId: Integer
+    + contribution: String
+    + criticism: String
+    + verdict: Verdict
+  }
+
+  record ArticleForReviewDTO {
+    + id: Integer
+    + title: String
+    + abstractText: String
+    + areas: List<String>
+  }
+
+  record CoordinatorDashboard {
+    + submittedArticles: int
+    + reviewers: int
+    + evaluatedArticles: int
+    + pendingArticles: int
+    + pendingDetails: List<PendingArticleInfo>
+  }
+
+  record PendingArticleInfo {
+    + articleTitle: String
+    + reviewerEmail: String
+    + dueDate: LocalDate
+  }
+}
+
+
+' ============================================================
+' RELACIONAMENTOS DO DOMÍNIO
+' ============================================================
+
+User --> Role
+SubmissionEvent --> Category
 
 User "1" -- "0..*" Article : mainAuthor
 User "0..*" -- "0..*" Article : coauthors
-User --> Role
 
-SubmissionEvent --> Category
+ReviewerProfile "1" --> "1" User : researcher
+ReviewerProfile "0..*" -- "0..*" Area : expertiseAreas
 
-Article "1" o-- "0..*" Review
 Article "0..*" -- "1..*" Area
+Article "1" o-- "0..*" Review
 Article o-- ArticleState
 
-ReviewerProfile "1" --> "1" User
-ReviewerProfile "0..*" -- "1..*" Area
-
-ReviewerInvitation "1" --> "1" User
-
-Review "1" --> "1" ReviewerProfile
 Review "1" --> "1" Article
+Review "1" --> "1" ReviewerProfile
 Review --> Verdict
 Review --> ReviewStatus
 
@@ -163,14 +270,61 @@ ArticleState <|.. AttentionState
 ArticleState <|.. AcceptedState
 ArticleState <|.. RejectedState
 
+
+' ============================================================
+' RELACIONAMENTOS DOS RECORDS
+' ============================================================
+
+StartEventData --> Category
+
+SubmitArticleData ..> User : coauthorIds
+SubmitArticleData ..> Area : areaIds
+
+DefineReviewerAreasData ..> Area : areaIds
+
+ReviewData --> Verdict
+
+ArticleForReviewDTO ..> Article : visão sem autores
+
+CoordinatorDashboard o-- PendingArticleInfo
+
+
+' ============================================================
+' NOTAS
+' ============================================================
+
 note right of ArticleForReviewDTO
   DTO usado para blind review.
-  Não expõe autores ao revisor.
+
+  O revisor recebe apenas os dados
+  necessários para avaliar o artigo,
+  sem acesso aos autores.
+end note
+
+note bottom of ReviewerProfile
+  O coordenador transforma um pesquisador
+  cadastrado em revisor criando ReviewerProfile.
+
+  O preenchimento das áreas temáticas pode
+  ser adiado até o revisor acessar o sistema.
 end note
 
 note bottom of Area
-  Area não guarda referência para SubmissionEvent,
-  porque o sistema trabalha apenas com o evento atual.
+  Area não guarda SubmissionEvent.
+
+  Como o sistema trabalha apenas com
+  o evento atual, os repositórios de
+  escopo de evento são limpos ao iniciar
+  um novo evento.
+end note
+
+note right of ArticleState
+  State concentra as transições do artigo:
+  submetido, em revisão, atenção,
+  aceito e rejeitado.
+
+  A regra de conclusão dos pareceres
+  não fica aqui; ela pertence a ReviewPolicy.
 end note
 
 @enduml

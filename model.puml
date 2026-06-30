@@ -1,275 +1,1245 @@
-@startuml
-  skinparam linetype ortho
+@startuml FullModel
 
-  enum Verdict {
-    REJECT
-    WEAK_REJECT
-    WEAK_ACCEPT
-    ACCEPT
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+title Sistema de Submissão e Avaliação de Artigos
+
+' ============================================================
+' DOMÍNIO PRINCIPAL
+' ============================================================
+
+package "Domínio" as DomainPkg {
+
+  class User {
+    - id: Integer
+    - email: String
+    - password: String
+    - institution: String
+    - roles: List<Role>
+    + hasRole(role: Role): boolean
+  }
+
+  enum Role {
+    RESEARCHER
+    COORDINATOR
+  }
+
+  class SubmissionEvent {
+    - id: Integer
+    - name: String
+    - city: String
+    - submissionDeadline: LocalDate
+    - startDate: LocalDate
+    - endDate: LocalDate
+    - category: Category
+    - reviewersPerArticle: int
+    + isSubmissionOpen(today: LocalDate): boolean
+    + getReviewDeadline(): LocalDate
   }
 
   enum Category {
-    FULL
-    SHORT
+    FULL_PAPER
+    SHORT_PAPER
     DEMO
   }
 
   class Area {
-    - title: String
-    - event: SubmissionEvent
-    - articles: List<Article>
-  }
-
-  class SubmissionEvent {
+    - id: Integer
     - name: String
-    - city: String
-    - start: Date
-    - end: Date
+  }
+
+  class ReviewerProfile {
+    - id: Integer
+    - researcher: User
+    - expertiseAreas: List<Area>
+    + setExpertiseAreas(areas: List<Area>): void
+    + hasExpertiseIn(area: Area): boolean
+    + hasDefinedExpertiseAreas(): boolean
+  }
+
+  class Article {
+    - id: Integer
+    - title: String
+    - abstractText: String
+    - mainAuthor: User
+    - coauthors: List<User>
     - areas: List<Area>
-    - articles: List<Article>
-    - category: Category
-    - active: boolean
+    - state: ArticleState
+    + startReview(): void
+    + accept(): void
+    + reject(): void
+    + markAttention(): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + isAuthor(user: User): boolean
   }
-
-  SubmissionEvent *-- Area 
-  SubmissionEvent o-- Category
-
-  class User { 
-    - name: String 
-    - email: String
-    - password: String
-    - institution: String
-    - articles: List<Article>
-  }
-
-  class Reviewer {
-    - user: User
-    - reviews: List<Review>
-    - areas: List<Area>
-  }
-
-  Reviewer o-- Area
-  Reviewer o-- User
 
   class Review {
-    - contributions: String
-    - critiques: String
-    - verdict: Verdict
+    - id: Integer
     - article: Article
-    - reviewer: Reviewer
+    - reviewer: ReviewerProfile
+    - contribution: String
+    - criticism: String
+    - verdict: Verdict
+    - status: ReviewStatus
+    - dueDate: LocalDate
+    + submit(contribution: String, criticism: String, verdict: Verdict): void
+    + isSubmitted(): boolean
   }
 
-  Review o-- Verdict
-  Review o-- Reviewer : reviewer
-
-  package State {
-    class Article {
-      - id: Integer
-      - title: String
-      - abstractText: String
-      - event: SubmissionEvent
-      - authors: List<User>
-      - areas: List<Area>
-      - reviews: List<Review>
-      - status: ArticleState
-      + setStatus(status: ArticleState)
-    }
-
-    Article o-- User : authors
-    Article o-- Area : areas
-
-    ' inverter essa relacao '
-    Article --o Review
-    Article o-left- ArticleState
-
-    interface ArticleState {
-      + startReview()
-      + accept()
-      + reject()
-      + isFinished(): boolean
-      + isReviewable(): boolean
-      + isAssignableToReviewer(): boolean
-    }
-
-    abstract class ArticleStateDefault {
-      - article: Article
-      + {abstract} startReview()
-      + {abstract} accept()
-      + {abstract} reject()
-      + {abstract} isFinished(): boolean
-      + {abstract} isReviewable(): boolean
-      + {abstract} isAssignableToReviewer(): boolean
-    }
-
-    ArticleStateDefault .up.|> ArticleState
-
-    class SubmittedState extends ArticleStateDefault {
-      - article: Article
-      + startReview()
-      + accept()
-      + reject()
-      + isFinished(): boolean
-      + isReviewable(): boolean
-      + isAssignableToReviewer(): boolean
-    }
-
-    class UnderReviewState extends ArticleStateDefault {
-      - article: Article
-      + startReview()
-      + accept()
-      + reject()
-      + isFinished(): boolean
-      + isReviewable(): boolean
-      + isAssignableToReviewer(): boolean
-    }
-
-    class AcceptedState extends ArticleStateDefault {
-      - article: Article
-      + startReview()
-      + accept()
-      + reject()
-      + isFinished(): boolean
-      + isReviewable(): boolean
-      + isAssignableToReviewer(): boolean
-    }
-
-    class RejectedState extends ArticleStateDefault {
-      - article: Article
-      + startReview()
-      + accept()
-      + reject()
-      + isFinished(): boolean
-      + isReviewable(): boolean
-      + isAssignableToReviewer(): boolean
-    }
+  enum Verdict {
+    REJECTED
+    WEAK_REJECTED
+    WEAK_ACCEPTED
+    ACCEPTED
   }
 
-  package Strategy {
-    class DistributionService {
-      - strategy: DistributionStrategy
-      + setStrategy(strat: Strategy)
-      + distribute(articles: List<Article>, reviewers: List<User>)
-    }
-
-    DistributionService o-- DistributionStrategy
-    DistributionService ..> Article
-    DistributionService ..> User
-
-    interface DistributionStrategy {
-      + distribute(articles: List<Article>, reviewers: List<User>)
-    }
-
-    class PairStrategy implements DistributionStrategy {
-      + distribute(articles: List<Article>, reviewers: List<User>)
-    }
+  enum ReviewStatus {
+    ASSIGNED
+    SUBMITTED
   }
 
-  class AuthService << (S,#FF7700) Singleton >> {
-    - currUser: Optional<User>
-    - userService: UserService
-    + authenticate(data: AuthData): User
-    + isAuthenticated(): boolean
-    + getCurrUserRoles(): List<Role>
-    + getCurrUser(): User
-    + logout()
+  enum ReviewOutcome {
+    ACCEPTED
+    REJECTED
+    ATTENTION
+    INCOMPLETE
+  }
+}
+
+
+' ============================================================
+' STATE
+' ============================================================
+
+package "State - Estado do Artigo" as StatePkg {
+
+  interface ArticleState <<State>> {
+    + startReview(article: Article): void
+    + accept(article: Article): void
+    + reject(article: Article): void
+    + markAttention(article: Article): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + getName(): String
   }
 
-  AuthService o-- UserService
-  AuthService --> User
-  AuthService ..> AuthData
-
-  class UserService implements Subscriber {
-    - repo: UserRepository
-    + getByEmail(email): Optional<User>
-    + createUser(user: User)
-    + demoteReviewers()
-    + update(event: SubmissionEventStartedEvent)
+  class SubmittedState {
+    + startReview(article: Article): void
+    + accept(article: Article): void
+    + reject(article: Article): void
+    + markAttention(article: Article): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + getName(): String
   }
 
-  UserService --> User
-  UserService o-- UserRepository
-  UserService ..> SubmissionEventStartedEvent
-
-  class SubmissionEventService {
-    - repo: Repository<SubmissionEvent, Integer>
-    - publisher: Publisher<T>
-    + start(data: SubmissionEvent)
-    + reset()
-    + addAreas(areas)
+  class UnderReviewState {
+    + startReview(article: Article): void
+    + accept(article: Article): void
+    + reject(article: Article): void
+    + markAttention(article: Article): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + getName(): String
   }
 
-  SubmissionEventService o-- Repository
-  SubmissionEventService o-- AreaService
-  SubmissionEventService o-- UserService
-  SubmissionEventService o-- ArticleService
-  SubmissionEventService o-- ReviewService
-  SubmissionEventService ..> SubmissionEvent
-  SubmissionEventService o-- EventPublisher
-
-  interface Repository<T, ID> {
-    + findAll(): List<T>
-    + findById(id: ID): T
-    + save(object: T): T
-    + deleteAll()
-  }
-  note left of Repository : Interface com tipo genérico
-
-  interface UserRepository<User, Integer> extends Repository {
-    + findAll(): List<User>
-    + findById(id: Integer): User
-    + findByEmail(email: String): User
-    + save(object: User): User
-    + deleteAll()
+  class AttentionState {
+    + startReview(article: Article): void
+    + accept(article: Article): void
+    + reject(article: Article): void
+    + markAttention(article: Article): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + getName(): String
   }
 
-  note right of UserRepository : Extensão de Repository com tipo definido
-
-  class ArticleService implements Subscriber {
-    - repo: Repository<Article, Integer>
-    + removeAll()
-    + update(event: SubmissionEventStartedEvent)
+  class AcceptedState {
+    + startReview(article: Article): void
+    + accept(article: Article): void
+    + reject(article: Article): void
+    + markAttention(article: Article): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + getName(): String
   }
 
-  ArticleService ..> SubmissionEventStartedEvent
-  ArticleService o-- Repository
-
-  class ReviewService implements Subscriber {
-    - repo: Repository<Review, Integer>
-    + removeAll()
-    + update(event: SubmissionEventStartedEvent)
+  class RejectedState {
+    + startReview(article: Article): void
+    + accept(article: Article): void
+    + reject(article: Article): void
+    + markAttention(article: Article): void
+    + isPending(): boolean
+    + isFinished(): boolean
+    + getName(): String
   }
+}
 
-  ReviewService ..> SubmissionEventStartedEvent
-  ReviewService o-- Repository
 
-  class AreaService implements Subscriber {
-    - repo: Repository<Area, Integer>
-    + removeAll()
-    + update(event: SubmissionEventStartedEvent)
-  }
+' ============================================================
+' DADOS / RECORDS
+' ============================================================
 
-  AreaService ..> SubmissionEventStartedEvent
-  AreaService o-- Repository
-  
-  class EventPublisher {
-    - subscribers: Map<Class<?>, List<Subscriber<?>>>
-    + sub<T>(eventType: Class<T>, s: Subscriber<T>)
-    + unsub<T>(eventType: Class<T>, s: Subscriber<T>)
-    + publish<T>(event: T)
-  }
+package "Dados / Records" as DataPkg {
 
-  EventPublisher --> Subscriber
-
-  interface Subscriber<T> {
-    + update(event: T)
-  } 
-  note left of Subscriber : Interface com tipo genérico
-
-  record SubmissionEventStartedEvent
-
-  class AuthData { 
-    + email: String 
+  record RegisterUserData {
+    + email: String
     + password: String
+    + institution: String
   }
+
+  record StartEventData {
+    + name: String
+    + city: String
+    + submissionDeadline: LocalDate
+    + startDate: LocalDate
+    + endDate: LocalDate
+    + category: Category
+    + reviewersPerArticle: int
+  }
+
+  record SubmitArticleData {
+    + title: String
+    + abstractText: String
+    + coauthorIds: List<Integer>
+    + areaIds: List<Integer>
+  }
+
+  record DefineReviewerAreasData {
+    + areaIds: List<Integer>
+  }
+
+  record ReviewData {
+    + reviewId: Integer
+    + contribution: String
+    + criticism: String
+    + verdict: Verdict
+  }
+
+  record ArticleForReviewDTO {
+    + id: Integer
+    + title: String
+    + abstractText: String
+    + areas: List<String>
+  }
+
+  record CoordinatorDashboard {
+    + submittedArticles: int
+    + reviewers: int
+    + evaluatedArticles: int
+    + pendingArticles: int
+    + pendingDetails: List<PendingArticleInfo>
+  }
+
+  record PendingArticleInfo {
+    + articleTitle: String
+    + reviewerEmail: String
+    + dueDate: LocalDate
+  }
+}
+
+
+' ============================================================
+' RELACIONAMENTOS DO DOMÍNIO
+' ============================================================
+
+User --> Role
+SubmissionEvent --> Category
+
+User "1" -- "0..*" Article : mainAuthor
+User "0..*" -- "0..*" Article : coauthors
+
+ReviewerProfile "1" --> "1" User : researcher
+ReviewerProfile "0..*" -- "0..*" Area : expertiseAreas
+
+Article "0..*" -- "1..*" Area
+Article "1" o-- "0..*" Review
+Article o-- ArticleState
+
+Review "1" --> "1" Article
+Review "1" --> "1" ReviewerProfile
+Review --> Verdict
+Review --> ReviewStatus
+
+ArticleState <|.. SubmittedState
+ArticleState <|.. UnderReviewState
+ArticleState <|.. AttentionState
+ArticleState <|.. AcceptedState
+ArticleState <|.. RejectedState
+
+
+' ============================================================
+' RELACIONAMENTOS DOS RECORDS
+' ============================================================
+
+StartEventData --> Category
+
+SubmitArticleData ..> User : coauthorIds
+SubmitArticleData ..> Area : areaIds
+
+DefineReviewerAreasData ..> Area : areaIds
+
+ReviewData --> Verdict
+
+ArticleForReviewDTO ..> Article : visão sem autores
+
+CoordinatorDashboard o-- PendingArticleInfo
+
+
+' ============================================================
+' NOTAS
+' ============================================================
+
+note right of ArticleForReviewDTO
+  DTO usado para blind review.
+
+  O revisor recebe apenas os dados
+  necessários para avaliar o artigo,
+  sem acesso aos autores.
+end note
+
+note bottom of ReviewerProfile
+  O coordenador transforma um pesquisador
+  cadastrado em revisor criando ReviewerProfile.
+
+  O preenchimento das áreas temáticas pode
+  ser adiado até o revisor acessar o sistema.
+end note
+
+note bottom of Area
+  Area não guarda SubmissionEvent.
+
+  Como o sistema trabalha apenas com
+  o evento atual, os repositórios de
+  escopo de evento são limpos ao iniciar
+  um novo evento.
+end note
+
+note right of ArticleState
+  State concentra as transições do artigo:
+  submetido, em revisão, atenção,
+  aceito e rejeitado.
+
+  A regra de conclusão dos pareceres
+  não fica aqui; ela pertence a ReviewPolicy.
+end note
+
+' ============================================================
+' REFERÊNCIAS EXTERNAS DO DOMÍNIO
+' ============================================================
+
+class Article <<domain>>
+class Review <<domain>>
+class ReviewerProfile <<domain>>
+class ReviewOutcome <<enum>>
+
+
+' ============================================================
+' STRATEGY + ABSTRACT FACTORY
+' ============================================================
+
+package "Strategy + Abstract Factory - Workflow de Revisão" as WorkflowPkg {
+
+  interface DistributionStrategy <<Strategy>> {
+    + distribute(articles: List<Article>, reviewers: List<ReviewerProfile>): List<Review>
+  }
+
+  abstract class BalancedDistributionStrategy {
+    # reviewersPerArticle(): int
+    + distribute(articles: List<Article>, reviewers: List<ReviewerProfile>): List<Review>
+    - selectReviewers(article: Article, reviewers: List<ReviewerProfile>): List<ReviewerProfile>
+    - calculateCompatibility(article: Article, reviewer: ReviewerProfile): int
+    - calculateReviewerLoad(reviewer: ReviewerProfile): int
+  }
+
+  class OneReviewerDistributionStrategy {
+    # reviewersPerArticle(): int
+  }
+
+  class TwoReviewerDistributionStrategy {
+    # reviewersPerArticle(): int
+  }
+
+  class ThreeReviewerDistributionStrategy {
+    # reviewersPerArticle(): int
+  }
+
+  interface ReviewPolicy <<Strategy>> {
+    + reviewersPerArticle(): int
+    + isComplete(reviews: List<Review>): boolean
+    + conclude(reviews: List<Review>): ReviewOutcome
+  }
+
+  class OneReviewerPolicy {
+    + reviewersPerArticle(): int
+    + isComplete(reviews: List<Review>): boolean
+    + conclude(reviews: List<Review>): ReviewOutcome
+  }
+
+  class TwoReviewerPolicy {
+    + reviewersPerArticle(): int
+    + isComplete(reviews: List<Review>): boolean
+    + conclude(reviews: List<Review>): ReviewOutcome
+  }
+
+  class ThreeReviewerPolicy {
+    + reviewersPerArticle(): int
+    + isComplete(reviews: List<Review>): boolean
+    + conclude(reviews: List<Review>): ReviewOutcome
+  }
+
+  interface ReviewWorkflowFactory <<Abstract Factory>> {
+    + createDistributionStrategy(): DistributionStrategy
+    + createReviewPolicy(): ReviewPolicy
+  }
+
+  class OneReviewerWorkflowFactory {
+    + createDistributionStrategy(): DistributionStrategy
+    + createReviewPolicy(): ReviewPolicy
+  }
+
+  class TwoReviewerWorkflowFactory {
+    + createDistributionStrategy(): DistributionStrategy
+    + createReviewPolicy(): ReviewPolicy
+  }
+
+  class ThreeReviewerWorkflowFactory {
+    + createDistributionStrategy(): DistributionStrategy
+    + createReviewPolicy(): ReviewPolicy
+  }
+
+  class ReviewWorkflowContext {
+    - distributionStrategy: DistributionStrategy
+    - reviewPolicy: ReviewPolicy
+    + configure(factory: ReviewWorkflowFactory): void
+    + getDistributionStrategy(): DistributionStrategy
+    + getReviewPolicy(): ReviewPolicy
+  }
+}
+
+DistributionStrategy <|.. BalancedDistributionStrategy
+
+BalancedDistributionStrategy <|-- OneReviewerDistributionStrategy
+BalancedDistributionStrategy <|-- TwoReviewerDistributionStrategy
+BalancedDistributionStrategy <|-- ThreeReviewerDistributionStrategy
+
+DistributionStrategy ..> Article : usa
+DistributionStrategy ..> ReviewerProfile : seleciona
+DistributionStrategy ..> Review : cria/retorna
+
+ReviewPolicy <|.. OneReviewerPolicy
+ReviewPolicy <|.. TwoReviewerPolicy
+ReviewPolicy <|.. ThreeReviewerPolicy
+
+ReviewPolicy ..> Review : analisa
+ReviewPolicy ..> ReviewOutcome : retorna
+
+ReviewWorkflowFactory <|.. OneReviewerWorkflowFactory
+ReviewWorkflowFactory <|.. TwoReviewerWorkflowFactory
+ReviewWorkflowFactory <|.. ThreeReviewerWorkflowFactory
+
+OneReviewerWorkflowFactory ..> OneReviewerDistributionStrategy : cria
+OneReviewerWorkflowFactory ..> OneReviewerPolicy : cria
+
+TwoReviewerWorkflowFactory ..> TwoReviewerDistributionStrategy : cria
+TwoReviewerWorkflowFactory ..> TwoReviewerPolicy : cria
+
+ThreeReviewerWorkflowFactory ..> ThreeReviewerDistributionStrategy : cria
+ThreeReviewerWorkflowFactory ..> ThreeReviewerPolicy : cria
+
+ReviewWorkflowContext o-- DistributionStrategy
+ReviewWorkflowContext o-- ReviewPolicy
+ReviewWorkflowContext --> ReviewWorkflowFactory : configura usando
+
+
+' ============================================================
+' OBSERVER
+' ============================================================
+
+package "Observer - Eventos de Domínio" as ObserverPkg {
+
+  interface DomainEvent
+
+  interface "Subscriber<T extends DomainEvent>" as Subscriber <<Observer>> {
+    + update(event: T): void
+  }
+
+  class EventPublisher <<Subject>> {
+    - subscribers: Map<Class<?>, List<Subscriber<?>>>
+    + subscribe(eventType: Class<T>, subscriber: Subscriber<T>): void
+    + unsubscribe(eventType: Class<T>, subscriber: Subscriber<T>): void
+    + publish(event: DomainEvent): void
+  }
+
+  class ArticleAssignedEvent {
+    - review: Review
+  }
+
+  class ArticleConcludedEvent {
+    - article: Article
+    - outcome: ReviewOutcome
+  }
+
+  class ReviewAttentionEvent {
+    - article: Article
+    - reviews: List<Review>
+  }
+
+  class ReviewerAssignmentEmailSubscriber {
+    - emailSender: EmailSender
+    + update(event: ArticleAssignedEvent): void
+  }
+
+  class AuthorResultEmailSubscriber {
+    - emailSender: EmailSender
+    + update(event: ArticleConcludedEvent): void
+  }
+
+  class ReviewAttentionEmailSubscriber {
+    - emailSender: EmailSender
+    + update(event: ReviewAttentionEvent): void
+  }
+}
+
+DomainEvent <|.. ArticleAssignedEvent
+DomainEvent <|.. ArticleConcludedEvent
+DomainEvent <|.. ReviewAttentionEvent
+
+EventPublisher o-- Subscriber
+EventPublisher ..> DomainEvent : publica
+
+Subscriber <|.. ReviewerAssignmentEmailSubscriber
+Subscriber <|.. AuthorResultEmailSubscriber
+Subscriber <|.. ReviewAttentionEmailSubscriber
+
+ArticleAssignedEvent --> Review
+ArticleConcludedEvent --> Article
+ArticleConcludedEvent --> ReviewOutcome
+ReviewAttentionEvent --> Article
+ReviewAttentionEvent --> Review
+
+
+' ============================================================
+' ADAPTER
+' ============================================================
+
+package "Adapter - Envio de Email" as EmailPkg {
+
+  record EmailMessage {
+    + to: String
+    + subject: String
+    + body: String
+  }
+
+  interface EmailSender <<Target>> {
+    + send(message: EmailMessage): void
+  }
+
+  class SmtpEmailSenderAdapter <<Adapter>> {
+    - smtpClient: SmtpClient
+    + send(message: EmailMessage): void
+  }
+
+  class FakeEmailSenderAdapter <<Adapter>> {
+    + send(message: EmailMessage): void
+  }
+
+  class SmtpClient <<Adaptee>> {
+    + sendEmail(to: String, subject: String, body: String): void
+  }
+}
+
+EmailSender <|.. SmtpEmailSenderAdapter
+EmailSender <|.. FakeEmailSenderAdapter
+
+SmtpEmailSenderAdapter --> SmtpClient
+EmailSender --> EmailMessage
+
+ReviewerAssignmentEmailSubscriber --> EmailSender
+AuthorResultEmailSubscriber --> EmailSender
+ReviewAttentionEmailSubscriber --> EmailSender
+
+
+' ============================================================
+' NOTAS
+' ============================================================
+
+note right of WorkflowPkg
+  Strategy:
+  - DistributionStrategy decide como distribuir artigos.
+  - ReviewPolicy decide quando a revisão está completa
+    e qual é o resultado final.
+
+  Abstract Factory:
+  - Garante que a estratégia de distribuição e a política
+    de conclusão sejam compatíveis com a quantidade de
+    revisores por artigo.
+end note
+
+note bottom of BalancedDistributionStrategy
+  A compatibilidade por área é cálculo interno
+  da distribuição balanceada.
+
+  Não há CompatibilityStrategy separada,
+  para reduzir classes sem perder a regra.
+end note
+
+note right of ObserverPkg
+  Observer desacopla regras principais
+  das notificações.
+
+  Ao distribuir ou concluir uma revisão,
+  o serviço publica eventos; os subscribers
+  cuidam dos e-mails.
+end note
+
+note bottom of EmailPkg
+  Adapter isola o mecanismo real de envio de e-mail.
+
+  O sistema depende de EmailSender,
+  não diretamente de SMTP ou biblioteca externa.
+end note
+
+' ============================================================
+' REFERÊNCIAS EXTERNAS
+' ============================================================
+
+class User <<domain>>
+class SubmissionEvent <<domain>>
+class Area <<domain>>
+class Article <<domain>>
+class Review <<domain>>
+class ReviewerProfile <<domain>>
+
+class Category <<enum>>
+class Verdict <<enum>>
+
+class ReviewWorkflowContext <<patterns>>
+interface ReviewWorkflowFactory <<patterns>>
+class EventPublisher <<patterns>>
+
+
+' ============================================================
+' REPOSITÓRIOS
+' ============================================================
+
+package "Repositórios em Memória" as RepoPkg {
+
+  interface ResettableRepository {
+    + deleteAll(): void
+  }
+
+  interface UserRepository {
+    + findAll(): List<User>
+    + findById(id: Integer): Optional<User>
+    + findByEmail(email: String): Optional<User>
+    + save(user: User): User
+  }
+
+  interface SubmissionEventRepository {
+    + saveCurrent(event: SubmissionEvent): void
+    + findCurrent(): Optional<SubmissionEvent>
+  }
+
+  interface AreaRepository {
+    + findAll(): List<Area>
+    + findById(id: Integer): Optional<Area>
+    + findByIds(ids: List<Integer>): List<Area>
+    + save(area: Area): Area
+    + deleteAll(): void
+  }
+
+  interface ReviewerRepository {
+    + findAll(): List<ReviewerProfile>
+    + findByUser(user: User): Optional<ReviewerProfile>
+    + save(reviewer: ReviewerProfile): ReviewerProfile
+    + deleteAll(): void
+  }
+
+  interface ArticleRepository {
+    + findAll(): List<Article>
+    + findByAuthor(author: User): List<Article>
+    + findPending(): List<Article>
+    + findFinished(): List<Article>
+    + save(article: Article): Article
+    + deleteAll(): void
+  }
+
+  interface ReviewRepository {
+    + findAll(): List<Review>
+    + findByArticle(article: Article): List<Review>
+    + findByReviewer(reviewer: ReviewerProfile): List<Review>
+    + save(review: Review): Review
+    + saveAll(reviews: List<Review>): void
+    + deleteAll(): void
+  }
+
+  class InMemoryUserRepository {
+    - users: List<User>
+    - nextId: int
+    + findAll(): List<User>
+    + findById(id: Integer): Optional<User>
+    + findByEmail(email: String): Optional<User>
+    + save(user: User): User
+  }
+
+  class InMemorySubmissionEventRepository {
+    - currentEvent: SubmissionEvent
+    + saveCurrent(event: SubmissionEvent): void
+    + findCurrent(): Optional<SubmissionEvent>
+  }
+
+  class InMemoryAreaRepository {
+    - areas: List<Area>
+    - nextId: int
+    + findAll(): List<Area>
+    + findById(id: Integer): Optional<Area>
+    + findByIds(ids: List<Integer>): List<Area>
+    + save(area: Area): Area
+    + deleteAll(): void
+  }
+
+  class InMemoryReviewerRepository {
+    - reviewers: List<ReviewerProfile>
+    - nextId: int
+    + findAll(): List<ReviewerProfile>
+    + findByUser(user: User): Optional<ReviewerProfile>
+    + save(reviewer: ReviewerProfile): ReviewerProfile
+    + deleteAll(): void
+  }
+
+  class InMemoryArticleRepository {
+    - articles: List<Article>
+    - nextId: int
+    + findAll(): List<Article>
+    + findByAuthor(author: User): List<Article>
+    + findPending(): List<Article>
+    + findFinished(): List<Article>
+    + save(article: Article): Article
+    + deleteAll(): void
+  }
+
+  class InMemoryReviewRepository {
+    - reviews: List<Review>
+    - nextId: int
+    + findAll(): List<Review>
+    + findByArticle(article: Article): List<Review>
+    + findByReviewer(reviewer: ReviewerProfile): List<Review>
+    + save(review: Review): Review
+    + saveAll(reviews: List<Review>): void
+    + deleteAll(): void
+  }
+}
+
+UserRepository <|.. InMemoryUserRepository
+SubmissionEventRepository <|.. InMemorySubmissionEventRepository
+AreaRepository <|.. InMemoryAreaRepository
+ReviewerRepository <|.. InMemoryReviewerRepository
+ArticleRepository <|.. InMemoryArticleRepository
+ReviewRepository <|.. InMemoryReviewRepository
+
+ResettableRepository <|-- AreaRepository
+ResettableRepository <|-- ReviewerRepository
+ResettableRepository <|-- ArticleRepository
+ResettableRepository <|-- ReviewRepository
+
+UserRepository ..> User
+SubmissionEventRepository ..> SubmissionEvent
+AreaRepository ..> Area
+ReviewerRepository ..> ReviewerProfile
+ReviewerRepository ..> User
+ArticleRepository ..> Article
+ArticleRepository ..> User
+ReviewRepository ..> Review
+ReviewRepository ..> Article
+ReviewRepository ..> ReviewerProfile
+
+InMemoryUserRepository o-- User
+InMemorySubmissionEventRepository o-- SubmissionEvent
+InMemoryAreaRepository o-- Area
+InMemoryReviewerRepository o-- ReviewerProfile
+InMemoryArticleRepository o-- Article
+InMemoryReviewRepository o-- Review
+
+
+' ============================================================
+' SERVICES
+' ============================================================
+
+package "Services" as ServicePkg {
+
+  class AccountService {
+    - userRepository: UserRepository
+    - currentUser: User
+    + registerResearcher(data: RegisterUserData): User
+    + authenticate(email: String, password: String): User
+    + getCurrentUser(): User
+    + logout(): void
+    + currentUserIsCoordinator(): boolean
+  }
+
+  class EventService {
+    - eventRepository: SubmissionEventRepository
+    - eventScopedRepositories: List<ResettableRepository>
+    - workflowContext: ReviewWorkflowContext
+    + startEvent(data: StartEventData): SubmissionEvent
+    + getCurrentEvent(): SubmissionEvent
+    + getDashboard(): CoordinatorDashboard
+    - selectFactory(reviewersPerArticle: int): ReviewWorkflowFactory
+  }
+
+  class CommitteeService {
+    - userRepository: UserRepository
+    - areaRepository: AreaRepository
+    - reviewerRepository: ReviewerRepository
+    + registerArea(name: String): Area
+    + listAreas(): List<Area>
+    + findAreasByIds(ids: List<Integer>): List<Area>
+    + inviteResearcher(userId: Integer): ReviewerProfile
+    + defineExpertiseAreas(user: User, areaIds: List<Integer>): ReviewerProfile
+    + needsExpertiseAreas(user: User): boolean
+    + findReviewerByUser(user: User): ReviewerProfile
+    + listReviewers(): List<ReviewerProfile>
+  }
+
+  class ArticleReviewService {
+    - articleRepository: ArticleRepository
+    - reviewRepository: ReviewRepository
+    - committeeService: CommitteeService
+    - eventService: EventService
+    - accountService: AccountService
+    - workflowContext: ReviewWorkflowContext
+    - eventPublisher: EventPublisher
+    + submitArticle(data: SubmitArticleData): Article
+    + listMyArticles(): List<Article>
+    + listArticlesForReview(reviewer: ReviewerProfile): List<ArticleForReviewDTO>
+    + listAssignedReviews(reviewer: ReviewerProfile): List<Review>
+    + submitReview(data: ReviewData): void
+  }
+
+  class DistributionService {
+    - articleRepository: ArticleRepository
+    - reviewerRepository: ReviewerRepository
+    - reviewRepository: ReviewRepository
+    - workflowContext: ReviewWorkflowContext
+    - eventPublisher: EventPublisher
+    + distributeArticles(): void
+  }
+
+  class DataSeeder {
+    - accountService: AccountService
+    - eventService: EventService
+    - committeeService: CommitteeService
+    + seedInitialData(): void
+  }
+}
+
+AccountService --> UserRepository
+
+EventService --> SubmissionEventRepository
+EventService --> ResettableRepository : limpa dados do evento
+EventService --> ReviewWorkflowContext
+EventService ..> ReviewWorkflowFactory
+EventService --> ArticleRepository
+EventService --> ReviewRepository
+EventService --> ReviewerRepository
+
+CommitteeService --> UserRepository
+CommitteeService --> AreaRepository
+CommitteeService --> ReviewerRepository
+
+ArticleReviewService --> ArticleRepository
+ArticleReviewService --> ReviewRepository
+ArticleReviewService --> CommitteeService
+ArticleReviewService --> EventService
+ArticleReviewService --> AccountService
+ArticleReviewService --> ReviewWorkflowContext
+ArticleReviewService --> EventPublisher
+
+DistributionService --> ArticleRepository
+DistributionService --> ReviewerRepository
+DistributionService --> ReviewRepository
+DistributionService --> ReviewWorkflowContext
+DistributionService --> EventPublisher
+
+DataSeeder --> AccountService
+DataSeeder --> EventService
+DataSeeder --> CommitteeService
+
+
+' ============================================================
+' FACADE + PROXY
+' ============================================================
+
+package "Facades e Proxy" as FacadePkg {
+
+  interface CoordinatorActions {
+    + startEvent(data: StartEventData): SubmissionEvent
+    + registerArea(name: String): Area
+    + inviteReviewer(userId: Integer): ReviewerProfile
+    + distributeArticles(): void
+    + getDashboard(): CoordinatorDashboard
+  }
+
+  class CoordinatorFacade <<Facade>> {
+    - eventService: EventService
+    - committeeService: CommitteeService
+    - distributionService: DistributionService
+    + startEvent(data: StartEventData): SubmissionEvent
+    + registerArea(name: String): Area
+    + inviteReviewer(userId: Integer): ReviewerProfile
+    + distributeArticles(): void
+    + getDashboard(): CoordinatorDashboard
+  }
+
+  class CoordinatorAuthorizationProxy <<Proxy>> {
+    - target: CoordinatorActions
+    - accountService: AccountService
+    + startEvent(data: StartEventData): SubmissionEvent
+    + registerArea(name: String): Area
+    + inviteReviewer(userId: Integer): ReviewerProfile
+    + distributeArticles(): void
+    + getDashboard(): CoordinatorDashboard
+    - requireCoordinator(): void
+  }
+
+  interface ResearcherActions {
+    + submitArticle(data: SubmitArticleData): Article
+    + listMyArticles(): List<Article>
+    + listAssignedArticles(): List<ArticleForReviewDTO>
+    + submitReview(data: ReviewData): void
+    + needsExpertiseAreas(): boolean
+    + defineExpertiseAreas(data: DefineReviewerAreasData): ReviewerProfile
+    + listAvailableAreas(): List<Area>
+  }
+
+  class ResearcherFacade <<Facade>> {
+    - articleReviewService: ArticleReviewService
+    - committeeService: CommitteeService
+    - accountService: AccountService
+    + submitArticle(data: SubmitArticleData): Article
+    + listMyArticles(): List<Article>
+    + listAssignedArticles(): List<ArticleForReviewDTO>
+    + submitReview(data: ReviewData): void
+    + needsExpertiseAreas(): boolean
+    + defineExpertiseAreas(data: DefineReviewerAreasData): ReviewerProfile
+    + listAvailableAreas(): List<Area>
+  }
+}
+
+CoordinatorActions <|.. CoordinatorFacade
+CoordinatorActions <|.. CoordinatorAuthorizationProxy
+
+CoordinatorAuthorizationProxy o-- CoordinatorActions
+CoordinatorAuthorizationProxy --> AccountService
+
+CoordinatorFacade --> EventService
+CoordinatorFacade --> CommitteeService
+CoordinatorFacade --> DistributionService
+
+ResearcherActions <|.. ResearcherFacade
+
+ResearcherFacade --> ArticleReviewService
+ResearcherFacade --> CommitteeService
+ResearcherFacade --> AccountService
+
+
+' ============================================================
+' APRESENTAÇÃO
+' ============================================================
+
+package "Apresentação" as PresentationPkg {
+
+  class LoginFlowController {
+    - accountService: AccountService
+    - researcherActions: ResearcherActions
+    - reviewerAreaSetupScreen: ReviewerAreaSetupScreen
+    - mainMenu: MainMenu
+    + afterLogin(): void
+  }
+
+  class MainMenu {
+    - coordinatorMenu: CoordinatorMenu
+    - researcherMenu: ResearcherMenu
+    + start(): void
+  }
+
+  class CoordinatorMenu {
+    - inputReader: InputReader
+    - consoleView: ConsoleView
+    - startEventCommand: StartEventCommand
+    - registerAreaCommand: RegisterAreaCommand
+    - inviteReviewerCommand: InviteReviewerCommand
+    - distributeArticlesCommand: DistributeArticlesCommand
+    + show(): void
+  }
+
+  class ResearcherMenu {
+    - inputReader: InputReader
+    - consoleView: ConsoleView
+    - submitArticleCommand: SubmitArticleCommand
+    - reviewArticleCommand: ReviewArticleCommand
+    + show(): void
+  }
+
+  class ReviewerAreaSetupScreen {
+    - inputReader: InputReader
+    - consoleView: ConsoleView
+    - researcherActions: ResearcherActions
+    - defineReviewerAreasCommand: DefineReviewerAreasCommand
+    + show(): void
+  }
+
+  class InputReader {
+    + readRegisterUserData(): RegisterUserData
+    + readStartEventData(): StartEventData
+    + readAreaName(): String
+    + readReviewerId(): Integer
+    + readSubmitArticleData(): SubmitArticleData
+    + readReviewData(): ReviewData
+    + readReviewerAreasData(areas: List<Area>): DefineReviewerAreasData
+  }
+
+  class ConsoleView {
+    + showMessage(message: String): void
+    + showError(error: Exception): void
+    + showAreas(areas: List<Area>): void
+    + showDashboard(dashboard: CoordinatorDashboard): void
+    + showArticlesForReview(articles: List<ArticleForReviewDTO>): void
+  }
+}
+
+LoginFlowController --> AccountService
+LoginFlowController --> ResearcherActions
+LoginFlowController --> ReviewerAreaSetupScreen
+LoginFlowController --> MainMenu
+
+MainMenu --> CoordinatorMenu
+MainMenu --> ResearcherMenu
+
+CoordinatorMenu --> InputReader
+CoordinatorMenu --> ConsoleView
+
+ResearcherMenu --> InputReader
+ResearcherMenu --> ConsoleView
+
+ReviewerAreaSetupScreen --> InputReader
+ReviewerAreaSetupScreen --> ConsoleView
+ReviewerAreaSetupScreen --> ResearcherActions
+
+
+' ============================================================
+' COMMAND
+' ============================================================
+
+package "Commands" as CommandPkg {
+
+  interface "Command<T>" as Command <<Command>> {
+    + execute(data: T): void
+  }
+
+  interface NoDataCommand <<Command>> {
+    + execute(): void
+  }
+
+  class StartEventCommand {
+    - coordinatorActions: CoordinatorActions
+    + execute(data: StartEventData): void
+  }
+
+  class RegisterAreaCommand {
+    - coordinatorActions: CoordinatorActions
+    + execute(data: String): void
+  }
+
+  class InviteReviewerCommand {
+    - coordinatorActions: CoordinatorActions
+    + execute(data: Integer): void
+  }
+
+  class SubmitArticleCommand {
+    - researcherActions: ResearcherActions
+    + execute(data: SubmitArticleData): void
+  }
+
+  class ReviewArticleCommand {
+    - researcherActions: ResearcherActions
+    + execute(data: ReviewData): void
+  }
+
+  class DefineReviewerAreasCommand {
+    - researcherActions: ResearcherActions
+    + execute(data: DefineReviewerAreasData): void
+  }
+
+  class DistributeArticlesCommand {
+    - coordinatorActions: CoordinatorActions
+    + execute(): void
+  }
+}
+
+Command <|.. StartEventCommand
+Command <|.. RegisterAreaCommand
+Command <|.. InviteReviewerCommand
+Command <|.. SubmitArticleCommand
+Command <|.. ReviewArticleCommand
+Command <|.. DefineReviewerAreasCommand
+NoDataCommand <|.. DistributeArticlesCommand
+
+StartEventCommand --> StartEventData
+RegisterAreaCommand --> CoordinatorActions
+InviteReviewerCommand --> CoordinatorActions
+SubmitArticleCommand --> SubmitArticleData
+ReviewArticleCommand --> ReviewData
+DefineReviewerAreasCommand --> DefineReviewerAreasData
+
+StartEventCommand --> CoordinatorActions
+SubmitArticleCommand --> ResearcherActions
+ReviewArticleCommand --> ResearcherActions
+DefineReviewerAreasCommand --> ResearcherActions
+DistributeArticlesCommand --> CoordinatorActions
+
+CoordinatorMenu --> StartEventCommand
+CoordinatorMenu --> RegisterAreaCommand
+CoordinatorMenu --> InviteReviewerCommand
+CoordinatorMenu --> DistributeArticlesCommand
+
+ResearcherMenu --> SubmitArticleCommand
+ResearcherMenu --> ReviewArticleCommand
+
+ReviewerAreaSetupScreen --> DefineReviewerAreasCommand
+
+
+' ============================================================
+' RECORDS / DTOs
+' ============================================================
+
+package "DTOs / Records" as DtoPkg {
+
+  record RegisterUserData {
+    + email: String
+    + password: String
+    + institution: String
+  }
+
+  record StartEventData {
+    + name: String
+    + city: String
+    + submissionDeadline: LocalDate
+    + startDate: LocalDate
+    + endDate: LocalDate
+    + category: Category
+    + reviewersPerArticle: int
+  }
+
+  record SubmitArticleData {
+    + title: String
+    + abstractText: String
+    + coauthorIds: List<Integer>
+    + areaIds: List<Integer>
+  }
+
+  record DefineReviewerAreasData {
+    + areaIds: List<Integer>
+  }
+
+  record ReviewData {
+    + reviewId: Integer
+    + contribution: String
+    + criticism: String
+    + verdict: Verdict
+  }
+
+  record ArticleForReviewDTO {
+    + id: Integer
+    + title: String
+    + abstractText: String
+    + areas: List<String>
+  }
+
+  record CoordinatorDashboard {
+    + submittedArticles: int
+    + reviewers: int
+    + evaluatedArticles: int
+    + pendingArticles: int
+    + pendingDetails: List<PendingArticleInfo>
+  }
+
+  record PendingArticleInfo {
+    + articleTitle: String
+    + reviewerEmail: String
+    + dueDate: LocalDate
+  }
+}
+
+StartEventData --> Category
+
+SubmitArticleData ..> User : coauthorIds
+SubmitArticleData ..> Area : areaIds
+
+DefineReviewerAreasData ..> Area : areaIds
+
+ReviewData --> Verdict
+
+ArticleForReviewDTO ..> Article : visão sem autores
+
+CoordinatorDashboard o-- PendingArticleInfo
+
+InputReader ..> RegisterUserData
+InputReader ..> StartEventData
+InputReader ..> SubmitArticleData
+InputReader ..> ReviewData
+InputReader ..> DefineReviewerAreasData
+InputReader ..> Area
+
+ConsoleView ..> CoordinatorDashboard
+ConsoleView ..> Area
+ConsoleView ..> ArticleForReviewDTO
+
+
+' ============================================================
+' NOTAS
+' ============================================================
+
+note as N1
+  Services agrupados por caso de uso:
+  - AccountService: cadastro e autenticação
+  - EventService: evento atual, reset, dashboard e workflow
+  - CommitteeService: áreas temáticas e revisores
+  - ArticleReviewService: submissão e avaliação
+  - DistributionService: distribuição automática
+end note
+
+note as N2
+  Commands não leem input.
+
+  A apresentação usa InputReader,
+  monta records de entrada e chama
+  o command correspondente.
+end note
+
+note as N3
+  Proxy protege as ações do coordenador.
+
+  Mesmo que a apresentação esconda opções,
+  o proxy impede execução indevida.
+end note
+
+note as N4
+  Repositórios concretos usam listas em memória.
+
+  UserRepository não é resetado.
+  Os dados do evento atual são limpos
+  por ResettableRepository ao iniciar
+  novo evento.
+end note
+
+N1 .. ServicePkg
+N2 .. CommandPkg
+N3 .. CoordinatorAuthorizationProxy
+N4 .. RepoPkg
 
 @enduml

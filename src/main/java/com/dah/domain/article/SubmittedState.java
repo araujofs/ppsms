@@ -36,7 +36,7 @@ public class SubmittedState implements ArticleState {
 
 	@Override
 	public String getName() {
-    return "Enviado";
+    return "Enviado para revisão";
 	}
     
 }

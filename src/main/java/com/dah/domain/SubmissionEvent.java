@@ -24,7 +24,7 @@ public class SubmissionEvent {
   public boolean isSubmissionOpen() {
     LocalDate today = LocalDate.now();
 
-    return today.isBefore(submissionDeadline);
+    return today.isBefore(submissionDeadline) || today.isEqual(submissionDeadline);
   }
 
   public LocalDate getReviewDeadline() {

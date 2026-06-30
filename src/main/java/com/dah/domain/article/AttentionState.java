@@ -31,11 +31,11 @@ public class AttentionState implements ArticleState {
 
 	@Override
 	public boolean isFinished() {
-    return false;
+    return !isPending();
 	}
 
 	@Override
 	public String getName() {
-    return "Conflito";
+    return "Discussão";
 	}
 }

@@ -6,22 +6,22 @@ public class AcceptedState implements ArticleState {
 
   @Override
   public void startReview(Article article) {
-    throw new UnsupportedOperationException("Artigo já foi revisado!");
+    throw new UnsupportedOperationException("Artigo já foi aceito!");
   }
 
   @Override
   public void accept(Article article) {
-    throw new UnsupportedOperationException("Artigo já foi revisado!");
+    throw new UnsupportedOperationException("Artigo já foi aceito!");
   }
 
   @Override
   public void reject(Article article) {
-    throw new UnsupportedOperationException("Artigo já foi revisado!");
+    throw new UnsupportedOperationException("Artigo já foi aceito!");
   }
 
   @Override
   public void markAttention(Article article) {
-    throw new UnsupportedOperationException("Artigo já foi revisado!");
+    throw new UnsupportedOperationException("Artigo já foi aceito!");
   }
 
   @Override
@@ -31,7 +31,7 @@ public class AcceptedState implements ArticleState {
 
   @Override
   public boolean isFinished() {
-    return true;
+    return !isPending();
   }
 
   @Override

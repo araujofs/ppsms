@@ -15,6 +15,7 @@ import lombok.Setter;
 public class Review {
   private Integer id;
   private Article article;
+  private ReviewerProfile reviewer;
   private String contribution;
   private String criticism;
   private Verdict verdict;
@@ -24,6 +25,8 @@ public class Review {
     this.contribution = contribution;
     this.criticism = criticism;
     this.verdict = verdict;
+    
+    this.status = ReviewStatus.SUBMITTED;
   }
 
   public boolean isSubmitted() {

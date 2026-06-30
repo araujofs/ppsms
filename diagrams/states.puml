@@ -4,9 +4,9 @@
   Submitted --> UnderReview : Artigo é entregue aos revisores
   UnderReview --> Accepted : 2 pareceres positivos
   UnderReview --> Rejected : 2 pareceres negativos
-  UnderReview --> InConsensus : Pareceres conflitantes
-  InConsensus --> Accepted : Consenso por aceite
-  InConsensus --> Rejected : Consenso por rejeição
+  UnderReview --> Attention : Pareceres conflitantes (de igual tamanho)
+  Attention --> Accepted : Consenso por aceite
+  Attention --> Rejected : Consenso por rejeição
 
   Accepted --> [*]
   Rejected --> [*]

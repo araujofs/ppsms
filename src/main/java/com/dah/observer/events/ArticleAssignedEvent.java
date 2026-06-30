@@ -8,5 +8,5 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class ArticleAssignedEvent implements DomainEvent {
-    private Review review;
+  private Review review;
 }

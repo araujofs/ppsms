@@ -219,7 +219,9 @@ package "Adapter - Envio de Email" as EmailPkg {
   }
 
   class SmtpEmailSenderAdapter <<Adapter>> {
-    - smtpClient: SmtpClient
+    - session: Session
+    - email: String
+    + SmtpEmailSenderAdapter(email, appPassword: String)
     + send(message: EmailMessage): void
   }
 
@@ -227,15 +229,30 @@ package "Adapter - Envio de Email" as EmailPkg {
     + send(message: EmailMessage): void
   }
 
-  class SmtpClient <<Adaptee>> {
-    + sendEmail(to: String, subject: String, body: String): void
+}
+
+package JakartaMailRelated {
+  class Transport {
+    + send(message: Message): void
   }
+
+  class Session <<Adaptee>>
+  class Properties
+  class MimeMessage
+  class Authenticator
+  class PasswordAuthentication
 }
 
 EmailSender <|.. SmtpEmailSenderAdapter
 EmailSender <|.. FakeEmailSenderAdapter
 
-SmtpEmailSenderAdapter --> SmtpClient
+SmtpEmailSenderAdapter --> Transport
+SmtpEmailSenderAdapter o-- Session
+SmtpEmailSenderAdapter --> Properties
+SmtpEmailSenderAdapter --> MimeMessage
+SmtpEmailSenderAdapter --> Authenticator
+SmtpEmailSenderAdapter --> PasswordAuthentication
+
 EmailSender --> EmailMessage
 
 ReviewerAssignmentEmailSubscriber --> EmailSender

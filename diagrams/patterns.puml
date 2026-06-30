@@ -12,6 +12,7 @@ title Padrões de Projeto - Sistema de Submissão e Avaliação
 ' ============================================================
 
 class Article <<domain>>
+class SubmissionEvent <<domain>>
 class Review <<domain>>
 class ReviewerProfile <<domain>>
 class ReviewOutcome <<enum>>
@@ -161,6 +162,8 @@ package "Observer - Eventos de Domínio" as ObserverPkg {
   class ArticleConcludedEvent {
     - article: Article
     - outcome: ReviewOutcome
+    - reviews: List<Review>
+    - event: SubmissionEvent
   }
 
   class ReviewAttentionEvent {
@@ -198,6 +201,8 @@ Subscriber <|.. ReviewAttentionEmailSubscriber
 ArticleAssignedEvent --> Review
 ArticleConcludedEvent --> Article
 ArticleConcludedEvent --> ReviewOutcome
+ArticleConcludedEvent --> Review
+ArticleConcludedEvent --> SubmissionEvent
 ReviewAttentionEvent --> Article
 ReviewAttentionEvent --> Review
 

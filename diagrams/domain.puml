@@ -16,6 +16,7 @@ package "Domínio" as DomainPkg {
   class User {
     - id: Integer
     - email: String
+    - name: String
     - password: String
     - institution: String
     - roles: List<Role>

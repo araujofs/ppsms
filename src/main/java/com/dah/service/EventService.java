@@ -1,6 +1,10 @@
 package com.dah.service;
 
+import com.dah.domain.Article;
+import com.dah.domain.Review;
 import com.dah.domain.SubmissionEvent;
+import com.dah.records.CoordinatorDashboard;
+import com.dah.records.PendingDetails;
 import com.dah.records.StartEventData;
 import com.dah.workflow.ReviewWorkflowContext;
 import com.dah.workflow.factory.OneReviewerWorkflowFactory;
@@ -9,19 +13,33 @@ import com.dah.workflow.factory.ThreeReviewerWorkflowFactory;
 import com.dah.workflow.factory.TwoReviewerWorkflowFactory;
 import com.dah.repository.ResettableRepository;
 import com.dah.repository.SubmissionEventRepository;
-import java.util.List;
+import com.dah.repository.ArticleRepository;
+import com.dah.repository.ReviewRepository;
+import com.dah.repository.ReviewerRepository;
 
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class EventService {
 
-    
     private final ReviewWorkflowContext workflowContext;
 
     private final SubmissionEventRepository eventRepository;
     private final List<ResettableRepository> eventScopedRepositories;
 
-    public EventService(ReviewWorkflowContext workflowContext) {
+    private final ArticleRepository articleRepository;
+    private final ReviewRepository reviewRepository;
+    private final ReviewerRepository reviewerRepository;
+
+
+    public EventService(ReviewWorkflowContext workflowContext, SubmissionEventRepository eventRepository,
+            List<ResettableRepository> eventScopedRepositories,
+            ArticleRepository articleRepository, ReviewRepository reviewRepository,
+            ReviewerRepository reviewerRepository) {
         this.workflowContext = workflowContext;
+        this.eventRepository = eventRepository;
+        this.eventScopedRepositories = eventScopedRepositories;
     }
 
     public SubmissionEvent startEvent(StartEventData data) {
@@ -38,13 +56,9 @@ public class EventService {
         ReviewWorkflowFactory factory = selectFactory(data.reviewersPerArticle());
         workflowContext.configure(factory);
 
-        // 3) TODO: limpar os dados do evento anterior (ResettableRepository)
-        //    e salvar este evento no SubmissionEventRepository.
-        //    Ex.: eventScopedRepositories.forEach(ResettableRepository::deleteAll);
-        //         return eventRepository.saveCurrent(event);
-        
+        eventScopedRepositories.forEach(ResettableRepository::deleteAll);
 
-        return event;
+        return eventRepository.saveCurrent(event);
     }
 
     private ReviewWorkflowFactory selectFactory(int reviewersPerArticle) {
@@ -57,9 +71,37 @@ public class EventService {
         };
     }
 
-    // TODO (Heitor + integração): precisa do SubmissionEventRepository.
-    // public SubmissionEvent getCurrentEvent() { ... }
+    public SubmissionEvent getCurrentEvent() {
+        return eventRepository.findCurrent()
+                .orElseThrow(() -> new IllegalStateException("Nenhum evento foi iniciado ainda."));
+    }
 
-    // TODO (integração): precisa dos repositórios de artigo/revisão para montar os números.
-    // public CoordinatorDashboard getDashboard() { ... }
-}
+    public CoordinatorDashboard getDashboard() {
+        SubmissionEvent event = getCurrentEvent();
+
+        List<Article> allArticles = articleRepository.findAll();
+        List<Article> pendingArticles = articleRepository.findPending();
+        List<Article> finishedArticles = articleRepository.findFinished();
+
+        List<PendingDetails> pendingDetails = new ArrayList<>();
+
+        for (Article article : pendingArticles) {
+            List<Review> reviews = reviewRepository.findByArticle(article);
+
+            for (Review review : reviews) {
+                if (!review.isSubmitted()) {
+                    pendingDetails.add(new PendingDetails(
+                            article.getTitle(),
+                            review.getReviewer().getResearcher().getEmail(),
+                            event.getReviewDeadline()));
+                }
+            }
+        }
+
+        return new CoordinatorDashboard(
+                allArticles.size(),
+                reviewerRepository.findAll().size(),
+                finishedArticles.size(),
+                pendingArticles.size(),
+                pendingDetails);
+    }

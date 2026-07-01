@@ -5,7 +5,7 @@ import com.dah.domain.SubmissionEvent;
 
 public interface SubmissionEventRepository {
 
-    void saveCurrent(SubmissionEvent event);
+    SubmissionEvent saveCurrent(SubmissionEvent event);
     
     Optional<SubmissionEvent> findCurrent();
 }

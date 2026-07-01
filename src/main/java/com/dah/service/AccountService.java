@@ -45,7 +45,7 @@ public class AccountService {
   public User getCurrentUser() {
     return this.currentUser;
   }
-  
+
   public void logout() {
     this.currentUser = null;
   }
@@ -60,5 +60,11 @@ public class AccountService {
     }
 
     return true;
+  }
+
+  // em AccountService.java
+  public User findUserById(Integer id) {
+    return userRepo.findById(id)
+        .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado: " + id));
   }
 }

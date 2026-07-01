@@ -1,4 +1,4 @@
-package com.dah.workflow;
+package com.dah.workflow.review;
 
 import com.dah.domain.Review;
 import com.dah.enums.ReviewOutcome;

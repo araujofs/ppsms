@@ -1,11 +1,11 @@
-package com.dah.workflow.strategies;
+package com.dah.workflow.review.strategies;
 
 import java.util.List;
 
 import com.dah.domain.Review;
 import com.dah.enums.ReviewOutcome;
 import com.dah.enums.Verdict;
-import com.dah.workflow.ReviewPolicy;
+import com.dah.workflow.review.ReviewPolicy;
 
 public class ThreeReviewerPolicy implements ReviewPolicy {
     @Override

@@ -1,8 +1,8 @@
-package com.dah.workflow.strategies;
+package com.dah.workflow.review.strategies;
 
-import com.dah.workflow.ReviewPolicy;
 import com.dah.domain.Review;
 import com.dah.enums.Verdict;
+import com.dah.workflow.review.ReviewPolicy;
 import com.dah.enums.ReviewOutcome;
 import java.util.List;
 

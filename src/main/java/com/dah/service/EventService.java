@@ -40,6 +40,9 @@ public class EventService {
         this.workflowContext = workflowContext;
         this.eventRepository = eventRepository;
         this.eventScopedRepositories = eventScopedRepositories;
+        this.articleRepository = articleRepository;
+        this.reviewRepository = reviewRepository;
+        this.reviewerRepository = reviewerRepository;
     }
 
     public SubmissionEvent startEvent(StartEventData data) {
@@ -105,3 +108,4 @@ public class EventService {
                 pendingArticles.size(),
                 pendingDetails);
     }
+}

@@ -1,5 +1,8 @@
 package com.dah.repository;
 
+import com.dah.domain.Article;
+import com.dah.domain.Review;
+import com.dah.domain.ReviewerProfile;
 import java.util.List;
 
 public interface ReviewRepository extends ResettableRepository {

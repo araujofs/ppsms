@@ -1,5 +1,6 @@
 package com.dah.repository;
 
+import com.dah.domain.Area;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -31,14 +32,15 @@ public class InMemoryAreaRepository implements AreaRepository {
 
     @Override
     public Area save(Area area) {
+        Area savedArea = area;
         if (area.getId() == null) {
-            area.setId(nextId++);
-            areas.add(area);
+            savedArea = new Area(nextId++, area.getName());
+            areas.add(savedArea);
         } else {
             areas.removeIf(a -> Objects.equals(a.getId(), area.getId()));
-            areas.add(area);
+            areas.add(savedArea);
         }
-        return area;
+        return savedArea;
     }
 
     @Override

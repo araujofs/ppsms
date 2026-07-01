@@ -1,5 +1,7 @@
 package com.dah.repository;
 
+import com.dah.domain.Article;
+import com.dah.domain.User;
 import java.util.List;
 
 public interface ArticleRepository extends ResettableRepository {

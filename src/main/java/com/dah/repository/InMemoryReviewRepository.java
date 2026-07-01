@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import com.dah.domain.Article;
+import com.dah.domain.Review;
+import com.dah.domain.ReviewerProfile;
 
 public class InMemoryReviewRepository implements ReviewRepository {
     private List<Review> reviews = new ArrayList<>();

@@ -7,6 +7,9 @@ import com.dah.workflow.factory.OneReviewerWorkflowFactory;
 import com.dah.workflow.factory.ReviewWorkflowFactory;
 import com.dah.workflow.factory.ThreeReviewerWorkflowFactory;
 import com.dah.workflow.factory.TwoReviewerWorkflowFactory;
+import com.dah.repository.ResettableRepository;
+import com.dah.repository.SubmissionEventRepository;
+import java.util.List;
 
 
 public class EventService {
@@ -14,9 +17,8 @@ public class EventService {
     
     private final ReviewWorkflowContext workflowContext;
 
-    // TODO (Heitor): quando as interfaces de repositório existirem, coloque aqui.
-    // private final SubmissionEventRepository eventRepository;
-    // private final List<ResettableRepository> eventScopedRepositories;
+    private final SubmissionEventRepository eventRepository;
+    private final List<ResettableRepository> eventScopedRepositories;
 
     public EventService(ReviewWorkflowContext workflowContext) {
         this.workflowContext = workflowContext;
@@ -36,10 +38,11 @@ public class EventService {
         ReviewWorkflowFactory factory = selectFactory(data.reviewersPerArticle());
         workflowContext.configure(factory);
 
-        // 3) TODO (Heitor): limpar os dados do evento anterior (ResettableRepository)
+        // 3) TODO: limpar os dados do evento anterior (ResettableRepository)
         //    e salvar este evento no SubmissionEventRepository.
         //    Ex.: eventScopedRepositories.forEach(ResettableRepository::deleteAll);
         //         return eventRepository.saveCurrent(event);
+        
 
         return event;
     }

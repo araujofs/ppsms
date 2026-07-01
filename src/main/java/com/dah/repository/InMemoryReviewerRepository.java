@@ -3,6 +3,8 @@ package com.dah.repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import com.dah.domain.ReviewerProfile;
+import com.dah.domain.User;
 
 public class InMemoryReviewerRepository implements ReviewerRepository {
     private List<ReviewerProfile> reviewers = new ArrayList<>();
@@ -16,7 +18,7 @@ public class InMemoryReviewerRepository implements ReviewerRepository {
     @Override
     public Optional<ReviewerProfile> findByUser(User user) {
         return reviewers.stream()
-                .filter(r -> r.getUser().equals(user))
+                .filter(r -> r.getResearcher().equals(user))
                 .findFirst();
     }
 

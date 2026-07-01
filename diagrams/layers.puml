@@ -18,6 +18,8 @@ class Article <<domain>>
 class Review <<domain>>
 class ReviewerProfile <<domain>>
 
+exception UnauthorizedOperationException
+
 class Category <<enum>>
 class Verdict <<enum>>
 
@@ -339,6 +341,7 @@ CoordinatorActions <|.. CoordinatorAuthorizationProxy
 
 CoordinatorAuthorizationProxy o-- CoordinatorActions
 CoordinatorAuthorizationProxy --> AccountService
+CoordinatorAuthorizationProxy --> UnauthorizedOperationException
 
 CoordinatorFacade --> EventService
 CoordinatorFacade --> CommitteeService

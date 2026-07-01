@@ -182,7 +182,7 @@ package "Services" as ServicePkg {
     + authenticate(email: String, password: String): User
     + getCurrentUser(): User
     + logout(): void
-    + currentUserIsCoordinator(): boolean
+    + isCurrentUserCoordinator(): boolean
   }
 
   class EventService {

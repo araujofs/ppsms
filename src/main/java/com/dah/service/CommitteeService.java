@@ -27,8 +27,7 @@ public class CommitteeService {
             throw new IllegalArgumentException("Nome da área não pode ser nulo ou vazio");
         }
 
-        if (areaRepository.findByIds(areaRepository.findAll().stream().map(Area::getId).toList()).stream()
-                .anyMatch(a -> a.getName().equalsIgnoreCase(name))) {
+        if (areaRepository.findAll().stream().anyMatch(a -> a.getName().equalsIgnoreCase(name))) {
             throw new IllegalArgumentException("Área com o mesmo nome já existe");
         }
 

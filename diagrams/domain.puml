@@ -16,6 +16,7 @@ package "Domínio" as DomainPkg {
   class User {
     - id: Integer
     - email: String
+    - name: String
     - password: String
     - institution: String
     - roles: List<Role>
@@ -32,8 +33,8 @@ package "Domínio" as DomainPkg {
     - name: String
     - city: String
     - submissionDeadline: LocalDate
-    - startDate: LocalDate
-    - endDate: LocalDate
+    - start: LocalDate
+    - end: LocalDate
     - category: Category
     - reviewersPerArticle: int
     + isSubmissionOpen(today: LocalDate): boolean
@@ -64,8 +65,7 @@ package "Domínio" as DomainPkg {
     - id: Integer
     - title: String
     - abstractText: String
-    - mainAuthor: User
-    - coauthors: List<User>
+    - authors: List<User>
     - areas: List<Area>
     - state: ArticleState
     + startReview(): void
@@ -74,7 +74,6 @@ package "Domínio" as DomainPkg {
     + markAttention(): void
     + isPending(): boolean
     + isFinished(): boolean
-    + isAuthor(user: User): boolean
   }
 
   class Review {
@@ -85,7 +84,6 @@ package "Domínio" as DomainPkg {
     - criticism: String
     - verdict: Verdict
     - status: ReviewStatus
-    - dueDate: LocalDate
     + submit(contribution: String, criticism: String, verdict: Verdict): void
     + isSubmitted(): boolean
   }
@@ -195,8 +193,8 @@ package "Dados / Records" as DataPkg {
     + name: String
     + city: String
     + submissionDeadline: LocalDate
-    + startDate: LocalDate
-    + endDate: LocalDate
+    + start: LocalDate
+    + end: LocalDate
     + category: Category
     + reviewersPerArticle: int
   }
@@ -204,7 +202,7 @@ package "Dados / Records" as DataPkg {
   record SubmitArticleData {
     + title: String
     + abstractText: String
-    + coauthorIds: List<Integer>
+    + authorIds: List<Integer>
     + areaIds: List<Integer>
   }
 

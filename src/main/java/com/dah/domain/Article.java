@@ -30,7 +30,7 @@ public class Article {
   }
 
   public void reject() {
-    state.accept(this);
+    state.reject(this);
   }
 
   public void markAttention() {

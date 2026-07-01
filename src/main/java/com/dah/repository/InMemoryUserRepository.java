@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import com.dah.domain.User;
 
 public class InMemoryUserRepository implements UserRepository {
     private List<User> users = new ArrayList<>();

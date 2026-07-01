@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
 public class InMemoryArticleRepository implements ArticleRepository {
     private List<Article> articles = new ArrayList<>();
     private int nextId = 1;
@@ -19,7 +18,7 @@ public class InMemoryArticleRepository implements ArticleRepository {
     @Override
     public List<Article> findByAuthor(User author) {
         return articles.stream()
-                .filter(a -> Objects.equals(a.getAuthor(), author))
+                .filter(a -> a.getAuthors() != null && a.getAuthors().contains(author))
                 .collect(Collectors.toList());
     }
 

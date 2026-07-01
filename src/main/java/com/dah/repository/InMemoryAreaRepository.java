@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.dah.domain.Area;
 
 public class InMemoryAreaRepository implements AreaRepository {
     private List<Area> areas = new ArrayList<>();

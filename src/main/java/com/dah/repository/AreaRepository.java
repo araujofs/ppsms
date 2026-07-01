@@ -2,6 +2,7 @@ package com.dah.repository;
 
 import java.util.List;
 import java.util.Optional;
+import com.dah.domain.Area;
 
 public interface AreaRepository extends ResettableRepository {
 

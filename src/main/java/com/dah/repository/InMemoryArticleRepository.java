@@ -1,7 +1,10 @@
 package com.dah.repository;
 
+import com.dah.domain.Article;
+import com.dah.domain.User;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class InMemoryArticleRepository implements ArticleRepository {
@@ -16,21 +19,21 @@ public class InMemoryArticleRepository implements ArticleRepository {
     @Override
     public List<Article> findByAuthor(User author) {
         return articles.stream()
-                .filter(a -> a.getAuthor().equals(author))
+                .filter(a -> Objects.equals(a.getAuthor(), author))
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Article> findPending() {
         return articles.stream()
-                .filter(a -> a.getStatus().equals("Submetido") || a.getStatus().equals("Revisão"))
+                .filter(a -> a.getState() != null && a.getState().isPending())
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Article> findFinished() {
         return articles.stream()
-                .filter(a -> a.getStatus().equals("Aceito") || a.getStatus().equals("Rejeitado"))
+                .filter(a -> a.getState() != null && a.getState().isFinished())
                 .collect(Collectors.toList());
     }
 
@@ -40,7 +43,7 @@ public class InMemoryArticleRepository implements ArticleRepository {
             article.setId(nextId++);
             articles.add(article);
         } else {
-            articles.removeIf(a -> a.getId().equals(article.getId()));
+            articles.removeIf(a -> Objects.equals(a.getId(), article.getId()));
             articles.add(article);
         }
         return article;

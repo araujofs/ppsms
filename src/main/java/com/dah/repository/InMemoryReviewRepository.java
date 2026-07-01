@@ -2,6 +2,7 @@ package com.dah.repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class InMemoryReviewRepository implements ReviewRepository {
@@ -16,14 +17,14 @@ public class InMemoryReviewRepository implements ReviewRepository {
     @Override
     public List<Review> findByArticle(Article article) {
         return reviews.stream()
-                .filter(r -> r.getArticle().equals(article))
+                .filter(r -> Objects.equals(r.getArticle(), article))
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Review> findByReviewer(ReviewerProfile reviewer) {
         return reviews.stream()
-                .filter(r -> r.getReviewer().equals(reviewer))
+                .filter(r -> Objects.equals(r.getReviewer(), reviewer))
                 .collect(Collectors.toList());
     }
 
@@ -33,7 +34,7 @@ public class InMemoryReviewRepository implements ReviewRepository {
             review.setId(nextId++);
             reviews.add(review);
         } else {
-            reviews.removeIf(r -> r.getId().equals(review.getId()));
+            reviews.removeIf(r -> Objects.equals(r.getId(), review.getId()));
             reviews.add(review);
         }
         return review;

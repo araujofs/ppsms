@@ -2,6 +2,7 @@ package com.dah.repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -17,7 +18,7 @@ public class InMemoryAreaRepository implements AreaRepository {
     @Override
     public Optional<Area> findById(Integer id) {
         return areas.stream()
-                .filter(a -> a.getId().equals(id))
+                .filter(a -> Objects.equals(a.getId(), id))
                 .findFirst();
     }
 
@@ -34,7 +35,7 @@ public class InMemoryAreaRepository implements AreaRepository {
             area.setId(nextId++);
             areas.add(area);
         } else {
-            areas.removeIf(a -> a.getId().equals(area.getId()));
+            areas.removeIf(a -> Objects.equals(a.getId(), area.getId()));
             areas.add(area);
         }
         return area;

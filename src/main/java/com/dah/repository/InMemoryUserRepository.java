@@ -2,6 +2,7 @@ package com.dah.repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class InMemoryUserRepository implements UserRepository {
@@ -16,14 +17,14 @@ public class InMemoryUserRepository implements UserRepository {
     @Override
     public Optional<User> findById(Integer id) {
         return users.stream()
-                .filter(u -> u.getId().equals(id))
+                .filter(u -> Objects.equals(u.getId(), id))
                 .findFirst();
     }
 
     @Override
     public Optional<User> findByEmail(String email) {
         return users.stream()
-                .filter(u -> u.getEmail().equalsIgnoreCase(email))
+                .filter(u -> u.getEmail() != null && u.getEmail().equalsIgnoreCase(email))
                 .findFirst();
     }
 
@@ -33,7 +34,7 @@ public class InMemoryUserRepository implements UserRepository {
             user.setId(nextId++);
             users.add(user);
         } else {
-            users.removeIf(u -> u.getId().equals(user.getId()));
+            users.removeIf(u -> Objects.equals(u.getId(), user.getId()));
             users.add(user);
         }
         return user;

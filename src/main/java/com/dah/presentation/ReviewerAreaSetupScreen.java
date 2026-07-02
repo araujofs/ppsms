@@ -24,15 +24,16 @@ public class ReviewerAreaSetupScreen {
     }
 
     public void show() {
-        consoleView.displayMessage("Bem-vindo! Para prosseguir, selecione suas áreas de expertise.");
+        consoleView.showMessage("Bem-vindo! Para prosseguir, selecione suas áreas de expertise.");
         
         var areas = researcherActions.listAvailableAreas();
-        consoleView.displayAreas(areas);
+        
+        consoleView.showAreas(areas);
 
-        DefineReviewerAreasData data = inputReader.readDefineReviewerAreasData();
+        DefineReviewerAreasData data = inputReader.readReviewerAreasData(areas);
 
         defineReviewerAreasCommand.execute(data);
         
-        consoleView.displayMessage("Áreas de expertise configuradas com sucesso!");
+        consoleView.showMessage("Áreas de expertise configuradas com sucesso!");
     }
 }

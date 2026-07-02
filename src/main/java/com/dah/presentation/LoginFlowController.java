@@ -29,6 +29,6 @@ public class LoginFlowController {
             reviewerAreaSetupScreen.show();
         }
 
-        mainMenu.show();
+        mainMenu.start();
     }
 }

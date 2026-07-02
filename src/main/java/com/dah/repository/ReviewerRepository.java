@@ -1,5 +1,7 @@
 package com.dah.repository;
 
+import com.dah.domain.ReviewerProfile;
+import com.dah.domain.User;
 import java.util.List;
 import java.util.Optional;
 

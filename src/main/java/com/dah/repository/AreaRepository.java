@@ -1,5 +1,6 @@
 package com.dah.repository;
 
+import com.dah.domain.Area;
 import java.util.List;
 import java.util.Optional;
 

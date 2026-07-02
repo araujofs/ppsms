@@ -185,6 +185,7 @@ package "Dados / Records" as DataPkg {
 
   record RegisterUserData {
     + email: String
+    + name: String
     + password: String
     + institution: String
   }

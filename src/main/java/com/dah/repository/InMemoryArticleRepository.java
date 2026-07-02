@@ -19,7 +19,7 @@ public class InMemoryArticleRepository implements ArticleRepository {
     @Override
     public List<Article> findByAuthor(User author) {
         return articles.stream()
-                .filter(a -> Objects.equals(a.getAuthor(), author))
+                .filter(a -> a.getAuthors() != null && a.getAuthors().contains(author))
                 .collect(Collectors.toList());
     }
 

@@ -1,3 +1,4 @@
 # ToDos
 
-- remover coauthors de SubmitArticleData
+- dataseeder deve virar subscriber de submission event started
+- remover metodo submit de review
